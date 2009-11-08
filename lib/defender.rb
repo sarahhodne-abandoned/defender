@@ -5,10 +5,12 @@ class Defender
   # The Defensio API version currently supported by Defender
   API_VERSION = "1.2"
   
+  ROOT_URL = "http://api.defensio.com/"
+  
   DEFAULT_OPTIONS = {
-    service_type: "blog",
-    api_key: "",
-    owner_url: ""
+    :service_type => "blog",
+    :api_key => "",
+    :owner_url => ""
   }
   
   ##
@@ -48,13 +50,9 @@ class Defender
     # otherwise.
     #
     # @return [Boolean]
-    def spam?
-      @spam
-    end
+    def spam?; @spam; end
     
-    def to_s
-      @signature
-    end
+    def to_s; @signature; end
   end
   
   ##
@@ -290,11 +288,7 @@ class Defender
     # @raise [APIKeyError] Raises this if no API key is given.
     def url(action)
       raise APIKeyError unless @api_key.length > 0
-      "http://api.defensio.com/" \
-      "#{@service_type}/" \
-      "#{Defender::API_VERSION}/" \
-      "#{action}/" \
-      "#{@api_key}.yaml"
+      "#{ROOT_URL}#{@service_type}/#{API_VERSION}/#{action}/#{@api_key}.yaml"
     end
     
     ##
