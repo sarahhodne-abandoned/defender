@@ -245,9 +245,7 @@ class Defender
   # @return [Boolean] Returns true if the comments were successfully marked,
   #   raises StandardError otherwise.
   def report_false_negatives(signatures)
-    response = call_action("report-false-negatives",
-                           "signatures" => signatures.map(&:to_s).join(","))
-    true
+    report_false(:negatives, signatures)
   end
   
   ##
@@ -264,9 +262,7 @@ class Defender
   # @return [Boolean] Returns true if the comments were successfully marked,
   #   raises StandardError otherwise.
   def report_false_positives(signatures)
-    response = call_action("report-false-positives",
-                           "signatures" => signatures.map(&:to_s).join(","))
-    true
+    report_false(:positives, signatures)
   end
   
   ##
@@ -280,6 +276,12 @@ class Defender
   end
   
   private
+    def report_false(type, signatures)
+      call_action("report-false-#{type}",
+                           "signatures" => signatures.join(","))
+      true
+    end
+  
     ##
     # Returns the url for the given action.
     #
