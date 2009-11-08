@@ -122,8 +122,8 @@ class Defender
   def self.options_to_parameters(options)
     opts = {}
     options.each do |key, val|
-      val = val.respond_to?(:strftime) ? val.strftime("%Y/%m/%d") : val.to_s
-      opts[key.to_s.gsub("_", "-").downcase] = val.to_s
+      opts[key.to_s.gsub("_", "-").downcase] = val.respond_to?(:strftime) ? 
+        val.strftime("%Y/%m/%d") : val.to_s
     end
     opts
   end
