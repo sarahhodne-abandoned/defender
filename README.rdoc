@@ -1,6 +1,6 @@
 = defender
 
-Description goes here.
+This is a Ruby wrapper of the Defensio[http://defensio.com] spam filtering API. To use this library, you need an API key from Defensio. Go ahead and {get one}[http://defensio.com/signup/].
 
 == Note on Patches/Pull Requests
  
