@@ -6,7 +6,7 @@ This is a Ruby wrapper of the Defensio[http://defensio.com] spam filtering API. 
 
 To run the tests, you need to pass the api key and owner url with the environment keys API_KEY and API_OWNER_URL, like this:
   rake spec API_KEY="key1234" API_OWNER_URL="http://myblog.com"
-The tests will fail with invalid keys and urls.
+The tests will fail with invalid keys and urls. If no key is given, the tests that require them will be skipped.
 
 == Note on Patches/Pull Requests
  

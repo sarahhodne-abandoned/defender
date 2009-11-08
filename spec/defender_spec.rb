@@ -20,7 +20,7 @@ describe "Defender" do
   it "should correctly identify a valid API key" do
     d = Defender.new(:api_key => ENV["API_KEY"], :owner_url => ENV["API_OWNER_URL"])
     d.valid_key?.should be_true
-  end
+  end if ENV["API_KEY"]
   
   it "should correctly identify an invalid API key" do
     d = Defender.new(:api_key => "key1234", :owner_url => ENV["API_OWNER_URL"])
@@ -37,7 +37,7 @@ describe "Defender" do
       :comment_type => "comment",
       :test_force => "spam,0.5000"
     ).spam?.should be_true
-  end
+  end if ENV["API_KEY"]
   
   it "should correctly identify a meaty comment" do
     d = Defender.new(:api_key => ENV["API_KEY"], :owner_url => ENV["API_OWNER_URL"])
@@ -49,7 +49,7 @@ describe "Defender" do
       :comment_type => "comment",
       :test_force => "ham,0.1000"
     ).spam?.should be_false
-  end
+  end if ENV["API_KEY"]
   
   it "should correctly set the spaminess" do
     d = Defender.new(:api_key => ENV["API_KEY"], :owner_url => ENV["API_OWNER_URL"])
@@ -61,7 +61,7 @@ describe "Defender" do
       :comment_type => "comment",
       :test_force => "spam,0.5000"
     ).spaminess.should == 0.5
-  end
+  end if ENV["API_KEY"]
   
   it "should fail without valid API credentials" do
     d = Defender.new(:api_key => "key1234", :owner_url => "http://google.com")
