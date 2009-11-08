@@ -178,24 +178,20 @@ class Defender
   # Announce an article existence. This should (if feasible) be called when an
   # article or blogpost is created so Defensio can analyse it.
   #
-  # @param [#to_s] title The title of the article
-  # @param [#to_s] author The name of the author of the article
-  # @param [#to_s] author_email The email address of the person posting the
+  # @param [Hash] opts All options are required.
+  # @option opts [#to_s] :article_title The title of the article
+  # @option opts [#to_s] :article_author The name of the author of the article
+  # @option opts [#to_s] :article_author_email The email address of the person posting the
   #   article.
-  # @param [#to_s] content The content of the article itself.
-  # @param [#to_s] permalink The permalink of the article just posted.
+  # @option opts [#to_s] :article_content The content of the article itself.
+  # @option opts [#to_s] :permalink The permalink of the article just posted.
   # @raise [StandardError] If the call fails, a StandardError is raised with
   #   the error message given from Defensio.
   # @return [Boolean] Returns true if the article was successfully announced,
   #   raises StandardError otherwise.
   # @see http://defensio.com/api/#announce-article
-  def announce_article(title, author, author_email, content, permalink)
-    response = call_action("announce-article",
-                           "article-title" => title.to_s,
-                           "article-author" => author.to_s,
-                           "article-author-email" => author_email.to_s,
-                           "article-content" => content,
-                           "permalink" => permalink)
+  def announce_article(opts={})
+    response = call_action(Defender.options_to_parameters(opts))
     true
   end
   
