@@ -6,7 +6,7 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = "defender"
     gem.summary = %Q{Ruby API wrapper for Defensio}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.description = %Q{A wrapper of the Defensio spam filtering service.}
     gem.email = "henrik.hodne@binaryhex.com"
     gem.homepage = "http://github.com/dvyjones/defender"
     gem.authors = ["Henrik Hodne"]
@@ -34,9 +34,8 @@ end
 task :spec => :check_dependencies
 
 begin
-  require 'reek/rake_task'
+  require 'reek/adapters/rake_task'
   Reek::RakeTask.new do |t|
-    t.fail_on_error = true
     t.verbose = false
     t.source_files = 'lib/**/*.rb'
   end
