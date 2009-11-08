@@ -162,14 +162,10 @@ class Defender
   # @return [Boolean]
   # @see http://defensio.com/api/#validate-key
   def valid_key?
-    begin
-      response = call_action("validate-key")
-      if response["status"] == "success"
-        return true
-      else
-        return false
-      end
-    rescue StandardError
+    response = call_action("validate-key")
+    if response["status"] == "success"
+      return true
+    else
       return false
     end
   end
