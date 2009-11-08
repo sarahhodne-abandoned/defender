@@ -64,47 +64,39 @@ class Defender
     # Defensio on this blog.
     #
     # @return [Float<0..1>]
-    attr_reader :accuracy
+    def accuracy; @response["accuracy"]; end
     
     ##
     # The number of spam comments caught by the filter.
-    attr_reader :spam
+    def spam; @response["spam"]; end
     
     ##
     # The number of ham (legitimate) comments accepted by the filter.
-    attr_reader :ham
+    def ham; @response["ham"]; end
     
     ##
     # The number of times a legitimate message was retrained from the spambox
     # (i.e. "de-spammed" by the user)
-    attr_reader :false_positives
+    def false_positives; @response["false-positives"]; end
     
     ##
     # The number of times a spam message was retrained from comments box (i.e.
     # "de-legitimized" by the user)
-    attr_reader :false_negatives
+    def false_negatives; @response["false-negatives"]; end
     
     ##
     # A boolean value indicating whether Defensio is still in its initial
     # learning phase.
     #
     # @return [Boolean]
-    attr_reader :learning
+    def learning; @response["learning"]; end
     
     ##
     # More details on the reason(s) why Defensio is still in its initial
     # learning phase.
-    attr_reader :learning_status
+    def learning_status; @response["learning-status"]; end
     
-    def initialize(response)
-      @accuracy = response["accuracy"]
-      @spam = response["spam"]
-      @ham = response["ham"]
-      @false_positives = response["false-positives"]
-      @false_negatives = response["false-negatives"]
-      @learning = response["learning"]
-      @learning_status = response["learning-status"]
-    end
+    def initialize(response); @response = response; end
   end
   
   attr_accessor :service_type, :api_key, :owner_url
@@ -129,11 +121,9 @@ class Defender
   # @return [Hash]
   def self.options_to_parameters(options)
     opts = {}
-    options.each do |key, value|
-      if value.respond_to?(:strftime)
-        value = value.strftime("%Y/%m/%d")
-      end
-      opts[key.to_s.gsub("_", "-").downcase] = value.to_s
+    options.each do |key, val|
+      val = val.respond_to?(:strftime) ? val.strftime("%Y/%m/%d") : val.to_s
+      opts[key.to_s.gsub("_", "-").downcase] = val.to_s
     end
     opts
   end
@@ -300,12 +290,9 @@ class Defender
     # @raise [APIKeyError] If an invalid (or no) API key is given, this is
     #   raised
     def call_action(action, params={})
-      params = {"owner-url" => @owner_url}.merge(params)
-      response = Net::HTTP.post_form(URI.parse(url(action)), params)
-      if response.code == 401
-        raise APIKeyError
-      else
-        Defender.raise_if_error(YAML.load(response.body)["defensio-result"])
-      end
+      response = Net::HTTP.post_form(URI.parse(url(action)),
+        {"owner-url" => @owner_url}.merge(params))
+      resp = YAML.load(response.body)["defensio-result"]
+      response.code == 401 ? raise(APIKeyError) : Defender.raise_if_error(resp)
     end
 end
