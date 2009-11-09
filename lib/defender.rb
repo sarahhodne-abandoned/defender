@@ -292,7 +292,8 @@ class Defender
     def call_action(action, params={})
       response = Net::HTTP.post_form(URI.parse(url(action)),
         {"owner-url" => @owner_url}.merge(params))
-      resp = YAML.load(response.body)["defensio-result"]
-      response.code == 401 ? raise(APIKeyError) : Defender.raise_if_error(resp)
+      response.code == 401 ?
+        raise(APIKeyError) :
+        Defender.raise_if_error(YAML.load(response.body)["defensio-result"])
     end
 end
