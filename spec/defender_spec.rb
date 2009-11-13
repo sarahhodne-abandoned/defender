@@ -121,4 +121,64 @@ describe "Defender" do
       )
     }.should raise_error(StandardError)
   end
+  
+  it "should correctly call the report-false-positives action with one signature given" do
+    @defender.
+      stubs(:call_action).
+      with('report-false-positives', {
+        "signatures" => "1"
+      }).
+      returns(true)
+    @defender.report_false_positives(1).should == true
+  end
+  
+  it "should correctly call the report-false-positives action with one signature given (array)" do
+    @defender.
+      stubs(:call_action).
+      with('report-false-positives', {
+        "signatures" => "1"
+      }).
+      returns(true)
+    @defender.report_false_positives([1]).should == true
+  end
+  
+  it "should correctly call the report-false-positives action with multiple signature given" do
+    @defender.
+      stubs(:call_action).
+      with('report-false-positives', {
+        "signatures" => "1,2,3"
+      }).
+      returns(true)
+    @defender.report_false_positives([1,2,3]).should == true
+  end
+
+  it "should correctly call the report-false-negatives action with one signature given" do
+    @defender.
+      stubs(:call_action).
+      with('report-false-negatives', {
+        "signatures" => "1"
+      }).
+      returns(true)
+    @defender.report_false_negatives(1).should == true
+  end
+  
+  it "should correctly call the report-false-negatives action with one signature given (array)" do
+    @defender.
+      stubs(:call_action).
+      with('report-false-negatives', {
+        "signatures" => "1"
+      }).
+      returns(true)
+    @defender.report_false_negatives([1]).should == true
+  end
+  
+  it "should correctly call the report-false-negatives action with multiple signature given" do
+    @defender.
+      stubs(:call_action).
+      with('report-false-negatives', {
+        "signatures" => "1,2,3"
+      }).
+      returns(true)
+    @defender.report_false_negatives([1,2,3])
+  end
 end
