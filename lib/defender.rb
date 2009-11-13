@@ -265,6 +265,9 @@ class Defender
   
   private
     def report_false(type, signatures)
+      signatures = (signatures.respond_to?(:to_a) ?
+        signatures.to_a :
+        [signatures])
       call_action("report-false-#{type}",
                            "signatures" => signatures.join(","))
       true
