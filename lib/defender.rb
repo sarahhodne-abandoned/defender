@@ -215,6 +215,7 @@ class Defender
   # @return [Defender::CommentResponse]
   # @see http://defensio.com/api/#audit-comment
   def audit_comment(opts={})
+    opts[:user_ip].gsub!(/^::ffff:(\d+\.\d+\.\d+\.\d+)/, '\1')
     response = call_action("audit-comment", Defender.options_to_parameters(opts))
     return CommentResponse.new(response)
   end

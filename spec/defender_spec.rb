@@ -100,6 +100,29 @@ describe "Defender" do
     ).spaminess.should == 0.5
   end
   
+  it "should change IPv6-style IPv4 adresses to IPv4 adresses" do
+    @defender.
+      stubs(:call_action).
+      with('audit-comment', {
+        "user-ip" => "127.0.0.1",
+        "article-date" => Time.now.strftime("%Y/%m/%d"),
+        "comment-author" => "Henrik Hodne",
+        "comment-type" => "comment",
+        "test-force" => "spam,0.5000",
+      }).
+      returns(
+      {"signature" => "abc123", "spam" => true, "spaminess" => 0.5}
+    )
+    
+    @defender.audit_comment(
+      :user_ip => "::ffff:127.0.0.1",
+      :article_date => Time.now,
+      :comment_author => "Henrik Hodne",
+      :comment_type => "comment",
+      :test_force => "spam,0.5000"
+    ).spaminess.should == 0.5
+  end
+  
   it "should fail without valid API credentials" do
     @defender.
       stubs(:call_action).
