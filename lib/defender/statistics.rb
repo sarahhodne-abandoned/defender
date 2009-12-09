@@ -20,7 +20,7 @@ class Defender::Statistics
   # The number of times a legitimate message was retrained from the spambox
   # (i.e. "de-spammed" by the user)
   def false_positives; @response["false-positives"]; end
-                45 ....
+
   ##
   # The number of times a spam message was retrained from comments box (i.e.
   # "de-legitimized" by the user)
