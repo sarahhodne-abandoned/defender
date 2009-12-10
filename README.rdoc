@@ -2,7 +2,7 @@
 
 This is a Ruby wrapper of the Defensio[http://defensio.com] spam filtering API. To use this library, you need an API key from Defensio. Go ahead and {get one}[http://defensio.com/signup/].
 
-For a tutorial on how to use defender, see my tutorial[http://binaryhex.com/posts/2] on my blog.
+Thanks to Defensio for the excellent documentation, the documentation in the code is more or less copied from them.
 
 == Note on Patches/Pull Requests
  
