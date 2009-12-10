@@ -45,7 +45,7 @@ module Defender
   # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
   #   URL encoded automatically.
   def self.get(uri, attributes=nil)
-    if attributes && attributes.length > 1
+    if attributes && attributes.length > 0
       uri = uri + "?"
       attributes.each do |key, value|
         uri << CGI.escape(key.to_s)
