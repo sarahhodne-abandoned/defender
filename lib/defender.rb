@@ -1,224 +1,132 @@
 require 'yaml'
 require 'net/http'
+require 'cgi'
 
-class Defender
+require 'defender/document'
+
+module Defender
   # The Defensio API version currently supported by Defender
-  API_VERSION = "1.2"
-  
-  ROOT_URL = "http://api.defensio.com/"
-  
-  DEFAULT_OPTIONS = {
-    :service_type => "blog",
-    :api_key => "",
-    :owner_url => ""
-  }
-  
-  ##
-  # Raised if an invalid or no API key is given
-  class APIKeyError < StandardError; end
+  API_VERSION = "2.0"
 
-  autoload :CommentResponse, 'defender/comment_response'
-  autoload :Statistics, 'defender/statistics'
+  SERVER_HOSTNAME = "api.defensio.com"
 
-  attr_accessor :service_type, :api_key, :owner_url
-  
+  class << self
+    attr_accessor :api_key
+  end
+
   ##
-  # Raises a StandardError with the error message from Defensio if the
-  # response is a "failed" one.
+  # Determines if the given API key is valid or not. This should only be used
+  # when configuring the client and prior to every content analysis (Document
+  # POST).
   #
-  # @param [Hash] response The return value from {#call_action}.
-  def self.raise_if_error(response)
-    if response["status"] == "fail"
-      raise StandardError, response["message"]
+  # Set the API key using {Defender.api_key}.
+  #
+  # @raise [StandardError] If an unexpected result was hit (not valid, nor
+  #   invalid), then a StandardError will be raised.
+  # @return [Boolean] Whether the API key was valid or not.
+  def self.check_api_key
+    key = Defender.api_key
+    return false unless key
+    code, resp = get(uri())
+    case code
+    when 200
+      return true
+    when 401, 404
+      return false
+    else
+      raise StandardError, resp['message']
     end
-    response
-  end
-  
-  ##
-  # Converts a hash with symbol keys and underscores to a hash with string
-  # keys and hyphens. Calls #strftime or #to_s on the values.
-  #
-  # @param [Hash] options Input options.
-  # @return [Hash]
-  def self.options_to_parameters(options)
-    opts = {}
-    options.each do |key, val|
-      opts[key.to_s.gsub("_", "-").downcase] = val.respond_to?(:strftime) ? 
-        val.strftime("%Y/%m/%d") : val.to_s
-    end
-    opts
   end
 
   ##
-  # Initialize Defender
+  # Sends a GET request and parses the YAML response to a hash.
   #
-  # @param [Hash] opts The options hash.
-  # @option opts ["blog","app"] :service_type ("blog") The service type. May be
-  #   "app" (use of Defender within an application) or "blog" (use of Defender
-  #   to support a blogging platform).
-  # @option opts [String] :api_key Your API key. This option is required, the
-  #   method calls will fail without it.
-  def initialize(opts={})
-    opts = DEFAULT_OPTIONS.merge(opts)
-    @service_type = opts[:service_type]
-    @api_key = opts[:api_key]
-    @owner_url = opts[:owner_url]
+  # @param [String] uri The URI to GET.
+  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
+  #   URL encoded automatically.
+  def self.get(uri, attributes=nil)
+    if attributes && attributes.length > 1
+      uri = uri + "?"
+      attributes.each do |key, value|
+        uri << CGI.escape(key.to_s)
+        uri << "="
+        uri << CGI.escape(value.to_s)
+        uri << "&"
+      end
+      uri = uri[0..-2]
+    end
+    request(:get, uri)
   end
-  
+
   ##
-  # Checks if the given key is valid.
+  # Sends a POST request and parses the YAML response to a hash.
   #
-  # @return [Boolean]
-  # @see http://defensio.com/api/#validate-key
-  def valid_key?
-    call_action("validate-key")["status"] == "success" ? true : false
+  # @param [String] uri The URI to POST.
+  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
+  #   URL encoded automatically.
+  def self.post(uri, attributes=nil)
+    request(:post, uri, attributes)
   end
-  
+
   ##
-  # Announce an article existence. This should (if feasible) be called when an
-  # article or blogpost is created so Defensio can analyse it.
+  # Sends a PUT request and parses the YAML response to a hash.
   #
-  # @param [Hash] opts All options are required.
-  # @option opts [#to_s] :article_title The title of the article
-  # @option opts [#to_s] :article_author The name of the author of the article
-  # @option opts [#to_s] :article_author_email The email address of the person posting the
-  #   article.
-  # @option opts [#to_s] :article_content The content of the article itself.
-  # @option opts [#to_s] :permalink The permalink of the article just posted.
-  # @raise [StandardError] If the call fails, a StandardError is raised with
-  #   the error message given from Defensio.
-  # @return [Boolean] Returns true if the article was successfully announced,
-  #   raises StandardError otherwise.
-  # @see http://defensio.com/api/#announce-article
-  def announce_article(opts={})
-    response = call_action(Defender.options_to_parameters(opts))
-    true
+  # @param [String] uri The URI to PUT.
+  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
+  #   URL encoded automatically.
+  def self.put(uri, attributes=nil)
+    request(:put, uri, attributes)
   end
-  
+
   ##
-  # Check if a comment is spam. This is the central action of Defensio.
+  # Sends a DELETE request and parses the YAML response to a hash.
   #
-  # @param [Hash] opts All options are recommended, but only required if noted.
-  # @option opts [#to_s] :user_ip The IP address of whomever is posting the
-  #   comment. This option is required.
-  # @option opts [#to_s, #strftime] :article_date The date the original blog
-  #   article was posted. If a string is given, it must be in the format
-  #   "yyyy/mm/dd". This option is required.
-  # @option opts [#to_s] :comment_author The name of the author of the comment.
-  #   This option is required.
-  # @option opts ["comment", "trackback", "pingback", "other"] :comment_type
-  #   The type of the comment being posted to the blog. This option is required
-  # @option opts [#to_s] :comment_content The actual content of the comment
-  #   (strongly recommended to be included where ever possible).
-  # @option opts [#to_s] :comment_author_email The email address of the person
-  #   posting the comment.
-  # @option opts [#to_s] :comment_author_url The URL of the person posting the
-  #   comment.
-  # @option opts [#to_s] :permalink The permalink of the blog post to which
-  #   the comment is being posted.
-  # @option opts [#to_s] :referrer The URL of the site that brought commenter
-  #   to this page.
-  # @option opts [Boolean] :user_logged_in Whether or not the user posting
-  #   the comment is logged-into the blogging platform
-  # @option opts [Boolean] :trusted_user Whether or not the user is an
-  #   administrator, moderator or editor of this blog; the client should pass
-  #   true only if blogging platform can guarantee that the user has been
-  #   authenticated and has a role of responsibility on this blog.
-  # @option opts [#to_s] :openid The OpenID URL of the currently logged in
-  #   user. Must be used in conjunction with :user_logged_in => true. OpenID
-  #   authentication must be taken care of by your application.
-  # @option opts [#to_s] :test_force For testing purposes only: Use this
-  #   parameter to force the outcome of audit_comment. Optionally affix (with
-  #   a comma) a desired spaminess return value (in the range 0 to 1).
-  #   Example: "spam,0.5000" or "ham,0.0010".
-  # @raise [StandardError] If the call fails, a StandardError is raised with
-  #   the error message given from Defensio.
-  # @return [Defender::CommentResponse]
-  # @see http://defensio.com/api/#audit-comment
-  def audit_comment(opts={})
-    opts[:user_ip].gsub!(/^::ffff:(\d+\.\d+\.\d+\.\d+)/, '\1')
-    response = call_action("audit-comment", Defender.options_to_parameters(opts))
-    return CommentResponse.new(response)
+  # @param [String] uri The URI to DELETE.
+  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
+  #   URL encoded automatically.
+  def self.delete(uri, attributes=nil)
+    request(:delete, uri, attributes)
   end
-  
-  ##
-  # This action is used to retrain false negatives. False negatives are
-  # comments that were originally tagged as "ham" (i.e. legitimate) but were
-  # in fact spam.
-  # 
-  # @param [Array<#to_s, CommentResponse>] signatures List of signatures (may
-  #   contain a single entry) of the comments to be submitted for retraining.
-  #   Note that a signature for each comment was originally provided by the
-  #   {#audit_comment} method.
-  # @raise [StandardError] If the call fails, a StandardError is raised with
-  #   the error message given from Defensio.
-  # @return [Boolean] Returns true if the comments were successfully marked,
-  #   raises StandardError otherwise.
-  def report_false_negatives(signatures)
-    report_false(:negatives, signatures)
-  end
-  
-  ##
-  # This action is used to retrain false negatives. False negatives are
-  # comments that were originally tagged as spam but were in fact "ham" (i.e.
-  # legitimate).
-  # 
-  # @param [Array<#to_s, CommentResponse>] signatures List of signatures (may
-  #   contain a single entry) of the comments to be submitted for retraining.
-  #   Note that a signature for each comment was originally provided by the
-  #   {#audit_comment} method.
-  # @raise [StandardError] If the call fails, a StandardError is raised with
-  #   the error message given from Defensio.
-  # @return [Boolean] Returns true if the comments were successfully marked,
-  #   raises StandardError otherwise.
-  def report_false_positives(signatures)
-    report_false(:positives, signatures)
-  end
-  
-  ##
-  # This action returns basic statistics regarding the performance of Defensio
-  # since activation.
-  #
-  # @return [Defender::Statistics]
-  def statistics
-    response = call_action("get-stats")
-    return Statistics.new(response)
-  end
-  
+
   private
-    def report_false(type, signatures)
-      signatures = (signatures.respond_to?(:to_a) ?
-        signatures.to_a :
-        [signatures])
-      call_action("report-false-#{type}",
-                           "signatures" => signatures.join(","))
-      true
+
+  ##
+  # Returns a URI mixing in the API version and the API key.
+  #
+  # @param [String] uri The portion of the URI after the API key and before the
+  # format of the response (if any).
+  def self.uri(uri="")
+    "/#{API_VERSION}/users/#{api_key}" + uri + ".yaml"
+  end
+
+  ##
+  # The method that does the HTTP requests and URL encodes the attributes.
+  # It will also parse the response from YAML and return the defensio-result
+  # field.
+  #
+  # @param [:get, :post, :put, :delete] method The HTTP method to use.
+  # @param [String] uri The URI to request.
+  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass in the
+  #    body. Will be automatically URL-encoded. Do not pass this (or pass nil)
+  #    if a GET request is made, or it will raise an {ArgumentError}.
+  def self.request(method, uri, attributes=nil)
+    method = {:get => Net::HTTP::Get, :post => Net::HTTP::Post,
+      :put => Net::HTTP::Put, :delete => Net::HTTP::Delete}[method]
+    body = nil
+    if attributes && attributes.length > 1
+      body = ""
+      attributes.each do |key, value|
+        body << CGI.escape(key.to_s)
+        body << "="
+        body << CGI.escape(value.to_s)
+        body << "&"
+      end
+      body = body[0..-2]
     end
-  
-    ##
-    # Returns the url for the given action.
-    #
-    # @param [#to_s] action The action to generate the URL for.
-    # @return [String] The URL for the action.
-    # @raise [APIKeyError] Raises this if no API key is given.
-    def url(action)
-      raise APIKeyError unless @api_key.length > 0
-      "#{ROOT_URL}#{@service_type}/#{API_VERSION}/#{action}/#{@api_key}.yaml"
+    Net::HTTP.start(SERVER_HOSTNAME) do |http|
+      req = method.new(uri)
+      response = http.request(req, body)
+      return [response.code.to_i, YAML.load(response.body)['defensio-result']]
     end
-    
-    ##
-    # Backend function for calling an action.
-    #
-    # @param [#to_s] action The action to call.
-    # @param [Hash] params The parameters for the action.
-    # @return [Hash] The raw response, only parsed from YAML.
-    # @raise [APIKeyError] If an invalid (or no) API key is given, this is
-    #   raised
-    def call_action(action, params={})
-      response = Net::HTTP.post_form(URI.parse(url(action)),
-        {"owner-url" => @owner_url}.merge(params))
-      response.code == 401 ?
-        raise(APIKeyError) :
-        Defender.raise_if_error(YAML.load(response.body)["defensio-result"])
-    end
+  end
 end
