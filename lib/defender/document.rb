@@ -249,7 +249,7 @@ module Defender
     #   otherwise.
     def save(async=false)
       if @signature # The document is submitted to Defensio
-        code, response = Defender.put("/documents/#{@signature}", {'allow' => @allow})
+        code, response = Defender.put(Defender.uri("/documents/#{@signature}"), {'allow' => @allow})
         if code == 200
           set_attributes(response)
           return true
@@ -257,39 +257,45 @@ module Defender
           raise StandardError, response['message']
         end
       else
-        @options = {}
-        @options['client'] = "Defender | 0.2 | Henrik Hodne | henrik.hodne@binaryhex.com"
-        @options['content'] = @content || raise(ArgumentError, "The content field is required")
-        @options['platform'] = @platform || "ruby"
-        @options['type'] = @type || raise(ArgumentError, "The type field is required")
+        options = {}
+        options['client'] = "Defender | 0.2 | Henrik Hodne | henrik.hodne@binaryhex.com"
+        options['content'] = @content || raise(ArgumentError, "The content field is required")
+        options['platform'] = @platform || "ruby"
+        options['type'] = @type || raise(ArgumentError, "The type field is required")
         # TODO: Make this nasty block nicer
-        @options['author-email'] = @author_email if @author_email
-        @options['author-ip'] = @author_ip if @author_ip
-        @options['author-logged-in'] = @author_logged_in if @author_logged_in
-        @options['author-name'] = @author_name if @author_name
-        @options['author-openid'] = @author_openid if @author_openid
-        @options['author-trusted'] = @author_trusted if @author_trusted
-        @options['author-url'] = @author_url if @author_url
-        @options['browser-cookies'] = @browser_cookies if @browser_cookies
-        @options['browser-javascript'] = @browser_javascript if @browser_javascript
-        @options['document-permalink'] = @document_permalink if @document_permalink
+        options['author-email'] = @author_email if @author_email
+        options['author-ip'] = @author_ip if @author_ip
+        options['author-logged-in'] = @author_logged_in unless @author_logged_in.nil?
+        options['author-name'] = @author_name if @author_name
+        options['author-openid'] = @author_openid if @author_openid
+        options['author-trusted'] = @author_trusted unless @author_trusted.nil?
+        options['author-url'] = @author_url if @author_url
+        options['browser-cookies'] = @browser_cookies unless @browser_cookies.nil?
+        options['browser-javascript'] = @browser_javascript unless @browser_javascript.nil?
+        options['document-permalink'] = @document_permalink if @document_permalink
         if @http_headers
-          @options['http-headers'] = ""
+          options['http-headers'] = ""
           @http_headers.to_a.each do |kv|
             if kv.respond_to?(:join)
               kv = kv.join(": ")
             end
-            @options['http-headers'] << kv + "\n"
+            options['http-headers'] << kv + "\n"
           end
         end
-        @options['parent-document-date'] = @parent_document_date.respond_to?(:strftime) ?
+        options['parent-document-date'] = @parent_document_date.respond_to?(:strftime) ?
           @parent_document_date.strftime("%Y-%m-%d") :
           @parent_document_date if @parent_document_date
-        @options['parent-document-permalink'] = @parent_document_permalink if @parent_document_permalink
-        @options['referrer'] = @referrer if @referrer
-        @options['title'] = @title if @title
+        options['parent-document-permalink'] = @parent_document_permalink if @parent_document_permalink
+        options['referrer'] = @referrer if @referrer
+        options['title'] = @title if @title
 
-        code, response = Defender.post("/documents", @options)
+        formatted_options = {}
+
+        options.each do |key, value|
+          formatted_options[key] = value.to_s
+        end
+
+        code, response = Defender.post(Defender.uri("/documents"), formatted_options)
         if code == 200
           set_attributes(response)
           return true
@@ -300,6 +306,11 @@ module Defender
     end
 
     def set_attributes(attributes)
+      @classification = attributes['classification']
+      @profane = attributes['profanity-match']
+      @signature = attributes['signature']
+      @spaminess = attributes['spaminess']
+      @allow = attributes['allow']
     end
   end
 end
