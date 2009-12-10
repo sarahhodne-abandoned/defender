@@ -54,5 +54,37 @@ describe Defender do
       document.profane?.should be_false
       document.signature.should == "baz"
     end
+
+    it "should not allow a spam-comment to be posted when given only required options" do
+      Defender.stubs(:request).with(:post, "/2.0/users/foobar/documents.yaml", {
+        "client" => "Defender | 0.2 | Henrik Hodne | henrik.hodne@binaryhex.com",
+        "content" => "[spam,0.89]",
+        "platform" => "ruby",
+        "type" => "test"
+      }).returns([200,
+        {
+          "api-version" => "2.0",
+          "status" => "success",
+          "message" => "",
+          "signature" => "bar",
+          "allow" => false,
+          "classification" => "spam",
+          "spaminess" => 0.89,
+          "profanity-match" => false
+        }
+      ])
+
+      Defender.api_key = "foobar"
+      document = Defender::Document.new
+      document.content = "[spam,0.89]"
+      document.type = :test
+      document.save
+
+      document.allow?.should be_false
+      document.classification.should == "spam"
+      document.spaminess.should == 0.89
+      document.profane?.should be_false
+      document.signature.should == "bar"
+    end
   end
 end
