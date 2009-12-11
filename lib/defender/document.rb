@@ -70,6 +70,32 @@ module Defender
     # The default is 'ruby'.
     #
     # @return [String]
+    attr_accessor :platform
+
+    ##
+    # Identified the type of content to be analyzed.
+    #
+    # Use *test* only for testing purposes.
+    #
+    # When *type* is set to *test*, Defensio (not Defender) parses content for
+    # classification and spaminess. For example, if you want the API to return
+    # *malicious* as the classification and a spaminess of *0.99*, insert the
+    # following in content:
+    #   [malicious,0.99]
+    #
+    # There are three possible classifications:
+    #
+    # * innocent
+    # * spam
+    # * malicious
+    #
+    # Spaminess should be a decimal value between 0 and 1 (see
+    # {#spaminess})
+    #
+    # *IMPORTANT*
+    #
+    # Do *NOT* leave type set to *test* in production. This could represent a
+    # significant security breach.
     attr_accessor :type
 
     ##
@@ -214,7 +240,7 @@ module Defender
     # @return [Document]
     def self.find(signature)
       document = new()
-      code, response = Defensio.get(Defensio.uri("/documents/#{signature}"))
+      code, response = Defender.get(Defender.uri("/documents/#{signature}"))
       case code
       when 200
         document.set_attributes(response)
@@ -227,6 +253,47 @@ module Defender
     ##
     # Create a new document.
     def initialize()
+    end
+
+    ##
+    # Creates an attributes hash to be sent to Defensio. This method will make
+    # sure that the required attributess are in, and the names of the attributes
+    # are correct.
+    #
+    # @return [Hash{String => String}]
+    def attributes_hash
+      options = {
+        'client' => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
+        'platform' => platform || "ruby",
+        'content' => content || raise(ArgumentError, "The content field is required"),
+        'type' => type || raise(ArgumentError, "The type field is required")
+      }
+      [
+        :author_email, :author_ip, :author_logged_in, :author_name, :author_openid,
+        :author_trusted, :author_url, :browser_cookies, :browser_javascript,
+        :document_permalink, :referrer, :title, :parent_document_permalink
+      ].each do |symbol|
+        options[symbol.to_s.gsub("_", "-")] = self.send(symbol)
+      end
+
+      headers = http_headers
+      unless headers.nil?
+        options['http-headers'] = headers.to_a.map do |kv|
+          kv = kv.join(": ") if kv.respond_to?(:join)
+        end.join("\n")
+      end
+
+      pddate = parent_document_date
+      options['parent-document-date'] = pddate.respond_to?(:strftime) ?
+        pddate.strftime("%Y-%m-%d") : pddate
+
+      formatted_options = {}
+
+      options.each do |key, value|
+        formatted_options[key] = value.to_s unless value.nil?
+      end
+
+      formatted_options
     end
 
     ##
@@ -248,69 +315,40 @@ module Defender
     # @return [true] Returns true if everything went ok, raises an error
     #   otherwise.
     def save(async=false)
-      if @signature # The document is submitted to Defensio
-        code, response = Defender.put(Defender.uri("/documents/#{@signature}"), {'allow' => @allow})
-        if code == 200
-          set_attributes(response)
-          return true
-        else
-          raise StandardError, response['message']
-        end
+      if sig = signature # The document is submitted to Defensio
+        code, response = Defender.put(Defender.uri("/documents/#{sig}"), {'allow' => allow?})
       else
-        options = {}
-        options['client'] = "Defender | 0.2 | Henrik Hodne | henrik.hodne@binaryhex.com"
-        options['content'] = @content || raise(ArgumentError, "The content field is required")
-        options['platform'] = @platform || "ruby"
-        options['type'] = @type || raise(ArgumentError, "The type field is required")
-        # TODO: Make this nasty block nicer
-        options['author-email'] = @author_email if @author_email
-        options['author-ip'] = @author_ip if @author_ip
-        options['author-logged-in'] = @author_logged_in unless @author_logged_in.nil?
-        options['author-name'] = @author_name if @author_name
-        options['author-openid'] = @author_openid if @author_openid
-        options['author-trusted'] = @author_trusted unless @author_trusted.nil?
-        options['author-url'] = @author_url if @author_url
-        options['browser-cookies'] = @browser_cookies unless @browser_cookies.nil?
-        options['browser-javascript'] = @browser_javascript unless @browser_javascript.nil?
-        options['document-permalink'] = @document_permalink if @document_permalink
-        if @http_headers
-          options['http-headers'] = ""
-          @http_headers.to_a.each do |kv|
-            if kv.respond_to?(:join)
-              kv = kv.join(": ")
-            end
-            options['http-headers'] << kv + "\n"
-          end
-        end
-        options['parent-document-date'] = @parent_document_date.respond_to?(:strftime) ?
-          @parent_document_date.strftime("%Y-%m-%d") :
-          @parent_document_date if @parent_document_date
-        options['parent-document-permalink'] = @parent_document_permalink if @parent_document_permalink
-        options['referrer'] = @referrer if @referrer
-        options['title'] = @title if @title
-
-        formatted_options = {}
-
-        options.each do |key, value|
-          formatted_options[key] = value.to_s
-        end
-
-        code, response = Defender.post(Defender.uri("/documents"), formatted_options)
-        if code == 200
-          set_attributes(response)
-          return true
-        else
-          raise StandardError, response['message']
-        end
+        code, response = Defender.post(Defender.uri("/documents"), attributes_hash)
       end
+      if response['status'] == 'success'
+        set_attributes(response)
+      else
+        raise StandardError, response['message']
+      end
+      true
     end
 
     def set_attributes(attributes)
-      @classification = attributes['classification']
+      [:classification, :signature, :spaminess, :allow].each do |symbol|
+        self.instance_variable_set(:"@#{symbol}", attributes[symbol.to_s])
+      end
       @profane = attributes['profanity-match']
-      @signature = attributes['signature']
-      @spaminess = attributes['spaminess']
-      @allow = attributes['allow']
+      undefine_setters
+    end
+
+    private
+
+    def undefine_setters
+      [
+        :content=, :platform=, :type=, :author_email=, :author_ip=,
+        :author_logged_in=, :author_name=, :author_openid=,
+        :author_trusted=, :author_url=, :browser_cookies=,
+        :browser_javascript=, :document_permalink=, :http_headers=,
+        :parent_document_date=, :referrer=, :title=
+      ].each do |method|
+        # TODO: Fix hack.
+        instance_eval "def self.#{method}(*args)\nmethod_missing(#{method.inspect}, *args)\nend"
+      end
     end
   end
 end

@@ -5,10 +5,15 @@ require 'cgi'
 require 'defender/document'
 
 module Defender
+  VERSION = "0.2.0"
+
   # The Defensio API version currently supported by Defender
   API_VERSION = "2.0"
 
   SERVER_HOSTNAME = "api.defensio.com"
+
+  HTTP_METHODS =  {:get => Net::HTTP::Get, :post => Net::HTTP::Post,
+                   :put => Net::HTTP::Put, :delete => Net::HTTP::Delete}
 
   class << self
     attr_accessor :api_key
@@ -46,14 +51,7 @@ module Defender
   #   URL encoded automatically.
   def self.get(uri, attributes=nil)
     if attributes && attributes.length > 0
-      uri = uri + "?"
-      attributes.each do |key, value|
-        uri << CGI.escape(key.to_s)
-        uri << "="
-        uri << CGI.escape(value.to_s)
-        uri << "&"
-      end
-      uri = uri[0..-2]
+      uri = uri + "?" + hash_to_http(attributes)
     end
     request(:get, uri)
   end
@@ -64,8 +62,8 @@ module Defender
   # @param [String] uri The URI to POST.
   # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
   #   URL encoded automatically.
-  def self.post(uri, attributes=nil)
-    request(:post, uri, attributes)
+  def self.post(*args)
+    request(:post, *args)
   end
 
   ##
@@ -74,8 +72,8 @@ module Defender
   # @param [String] uri The URI to PUT.
   # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
   #   URL encoded automatically.
-  def self.put(uri, attributes=nil)
-    request(:put, uri, attributes)
+  def self.put(*args)
+    request(:put, *args)
   end
 
   ##
@@ -84,8 +82,8 @@ module Defender
   # @param [String] uri The URI to DELETE.
   # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
   #   URL encoded automatically.
-  def self.delete(uri, attributes=nil)
-    request(:delete, uri, attributes)
+  def self.delete(*args)
+    request(:delete, *args)
   end
 
   private
@@ -110,23 +108,27 @@ module Defender
   #    body. Will be automatically URL-encoded. Do not pass this (or pass nil)
   #    if a GET request is made, or it will raise an {ArgumentError}.
   def self.request(method, uri, attributes=nil)
-    method = {:get => Net::HTTP::Get, :post => Net::HTTP::Post,
-      :put => Net::HTTP::Put, :delete => Net::HTTP::Delete}[method]
     body = nil
-    if attributes && attributes.length > 1
-      body = ""
-      attributes.each do |key, value|
-        body << CGI.escape(key.to_s)
-        body << "="
-        body << CGI.escape(value.to_s)
-        body << "&"
-      end
-      body = body[0..-2]
+    if method != :get && attributes && attributes.length > 0
+      body = hash_to_http(attributes)
     end
     Net::HTTP.start(SERVER_HOSTNAME) do |http|
-      req = method.new(uri)
-      response = http.request(req, body)
+      response = http.request(HTTP_METHODS[method].new(uri), body)
       return [response.code.to_i, YAML.load(response.body)['defensio-result']]
     end
+  end
+
+  ##
+  # Converts a Hash to a HTTP options hash, like foo=bar&baz=foobar
+  #
+  # @param [Hash{#to_s => #to_s}] hsh
+  # @return [String]
+  def self.hash_to_http(hsh)
+    http_a = ""
+    hsh.each do |key,value|
+      http_a << CGI.escape(key.to_s) << "=" <<
+        CGI.escape(value.to_s) << "&"
+    end
+    http_a[0..-2]
   end
 end
