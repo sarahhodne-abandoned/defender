@@ -33,6 +33,34 @@ describe Defender::Document do
       document.signature.should == "baz"
     end
 
+    it "marks an asynchronously requested document as pending" do
+      Defender.expects(:request).with(:post, "/2.0/users/foobar/documents.yaml", {
+        "client" => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
+        "content" => "[innocent,0.1]",
+        "platform" => "ruby",
+        "type" => "test",
+        "async" => "true"
+      }).returns([200,
+        {
+          "api-version" => "2.0",
+          "status" => "pending",
+          "message" => "",
+          "signature" => "baz",
+          "allow" => nil,
+          "classification" => nil,
+          "spaminess" => nil,
+          "profanity-match" => nil
+        }])
+
+      Defender.api_key = "foobar"
+      document = Defender::Document.new
+      document.content = "[innocent,0.1]"
+      document.type = :test
+      document.save(true)
+
+      document.pending?.should be_true
+    end
+
     it "should not allow a spammy document to be posted when given only required options" do
       Defender.expects(:request).with(:post, "/2.0/users/foobar/documents.yaml", {
         "client" => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
@@ -63,6 +91,115 @@ describe Defender::Document do
       document.spaminess.should == 0.89
       document.profane?.should be_false
       document.signature.should == "bar"
+    end
+    
+    it "accepts a string to parent-document-date" do
+      Defender.expects(:request).with(:post, "/2.0/users/foobar/documents.yaml", {
+        "client" => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
+        "content" => "[spam,0.89]",
+        "platform" => "ruby",
+        "type" => "test",
+        "parent-document-date" => "2009-01-01"
+      }).returns([200,
+        {
+          "api-version" => "2.0",
+          "status" => "success",
+          "message" => "",
+          "signature" => "bar",
+          "allow" => false,
+          "classification" => "spam",
+          "spaminess" => 0.89,
+          "profanity-match" => false
+        }
+      ]) 
+      Defender.api_key = "foobar"
+      document = Defender::Document.new
+      document.content = "[spam,0.89]"
+      document.type = :test    
+      document.parent_document_date = "2009-01-01"
+      document.save
+    end
+
+    it "accepts a Time to parent-document-date" do
+      time = Time.now
+      Defender.expects(:request).with(:post, "/2.0/users/foobar/documents.yaml", {
+        "client" => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
+        "content" => "[spam,0.89]",
+        "platform" => "ruby",
+        "type" => "test",
+        "parent-document-date" => time.strftime("%Y-%m-%d")
+      }).returns([200,
+        {
+          "api-version" => "2.0",
+          "status" => "success",
+          "message" => "",
+          "signature" => "bar",
+          "allow" => false,
+          "classification" => "spam",
+          "spaminess" => 0.89,
+          "profanity-match" => false
+        }
+      ]) 
+      Defender.api_key = "foobar"
+      document = Defender::Document.new
+      document.content = "[spam,0.89]"
+      document.type = :test    
+      document.parent_document_date = time
+      document.save
+    end
+    
+    it "accepts a hash as headers" do
+      Defender.expects(:request).with(:post, "/2.0/users/foobar/documents.yaml", {
+        "client" => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
+        "content" => "[spam,0.89]",
+        "platform" => "ruby",
+        "type" => "test",
+        "http-headers" => "Foo: Bar\nBar: Baz"
+      }).returns([200,
+        {
+          "api-version" => "2.0",
+          "status" => "success",
+          "message" => "",
+          "signature" => "bar",
+          "allow" => false,
+          "classification" => "spam",
+          "spaminess" => 0.89,
+          "profanity-match" => false
+        }
+      ]) 
+      Defender.api_key = "foobar"
+      document = Defender::Document.new
+      document.content = "[spam,0.89]"
+      document.type = :test    
+      document.http_headers = {"Foo" => "Bar", "Bar" => "Baz"}
+      document.save
+    end
+
+    it "accepts an array as headers" do
+      Defender.expects(:request).with(:post, "/2.0/users/foobar/documents.yaml", {
+        "client" => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
+        "content" => "[spam,0.89]",
+        "platform" => "ruby",
+        "type" => "test",
+        "http-headers" => "Foo: Bar\nBar: Baz"
+      }).returns([200,
+        {
+          "api-version" => "2.0",
+          "status" => "success",
+          "message" => "",
+          "signature" => "bar",
+          "allow" => false,
+          "classification" => "spam",
+          "spaminess" => 0.89,
+          "profanity-match" => false
+        }
+      ]) 
+      Defender.api_key = "foobar"
+      document = Defender::Document.new
+      document.content = "[spam,0.89]"
+      document.type = :test    
+      document.http_headers = ["Foo: Bar", "Bar: Baz"]
+      document.save
     end
 
     it "raises a StandardError on server error" do
