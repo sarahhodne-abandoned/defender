@@ -4,6 +4,8 @@ This is a Ruby wrapper of the Defensio[http://defensio.com] spam filtering API. 
 
 Thanks to Defensio for the excellent documentation, the documentation in the code is more or less copied from them.
 
+Defender follows the {Semantic Versioning}[http://semver.org/] spec.
+
 == Note on Patches/Pull Requests
  
 * Fork the project.
