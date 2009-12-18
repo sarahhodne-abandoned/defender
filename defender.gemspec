@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
      "README.rdoc",
      "Rakefile",
      "VERSION",
+     "defender.gemspec",
      "lib/defender.rb",
      "lib/defender/document.rb",
      "lib/defender/statistics.rb",
@@ -49,18 +50,18 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
-      s.add_development_dependency(%q<rspec>, [">= 1.2.9"])
-      s.add_development_dependency(%q<yard>, [">= 0"])
-      s.add_development_dependency(%q<mocha>, [">= 0.9.8"])
+      s.add_development_dependency(%q<rspec>, ["~> 1.2.9"])
+      s.add_development_dependency(%q<yard>, ["~> 0.4.0"])
+      s.add_development_dependency(%q<mocha>, ["~> 0.9.8"])
     else
-      s.add_dependency(%q<rspec>, [">= 1.2.9"])
-      s.add_dependency(%q<yard>, [">= 0"])
-      s.add_dependency(%q<mocha>, [">= 0.9.8"])
+      s.add_dependency(%q<rspec>, ["~> 1.2.9"])
+      s.add_dependency(%q<yard>, ["~> 0.4.0"])
+      s.add_dependency(%q<mocha>, ["~> 0.9.8"])
     end
   else
-    s.add_dependency(%q<rspec>, [">= 1.2.9"])
-    s.add_dependency(%q<yard>, [">= 0"])
-    s.add_dependency(%q<mocha>, [">= 0.9.8"])
+    s.add_dependency(%q<rspec>, ["~> 1.2.9"])
+    s.add_dependency(%q<yard>, ["~> 0.4.0"])
+    s.add_dependency(%q<mocha>, ["~> 0.9.8"])
   end
 end
 
