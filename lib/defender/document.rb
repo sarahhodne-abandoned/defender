@@ -232,6 +232,20 @@ module Defender
     attr_accessor :title
 
     ##
+    # Is the document still pending?
+    #
+    # @return [Boolean]
+    attr_reader :pending
+    alias :pending? :pending
+
+    ##
+    # Set the pending attribute to true. Only to be used by {find} and similar
+    # methods.
+    #
+    # @private
+    def pending!; @pending = true; end
+
+    ##
     # Retrieves a document from the Defensio server.
     #
     # This can be called up to 30 days after the initial posting of a document
@@ -241,9 +255,9 @@ module Defender
     def self.find(signature)
       document = new()
       code, response = Defender.get(Defender.uri("/documents/#{signature}"))
-      case code
-      when 200
+      if code == 200
         document.set_attributes(response)
+        document.pending! if response['status'] == 'pending'
       else
         raise StandardError, response['message']
       end
@@ -253,6 +267,27 @@ module Defender
     ##
     # Create a new document.
     def initialize()
+    end
+
+    ##
+    # Re-retrieves the document from the Defensio server
+    #
+    # This can be called up to 30 days after the initial posting of the document
+    # to Defensio
+    #
+    # @return [true] The document was updated.
+    # @return [false] The document was not updated (still pending).
+    def refresh!
+      code, response = Defender.get(Defender.uri("/documents/#{signature}"))
+      if code == 200 && response['status'] == 'success'
+        document.set_attributes(response)
+        return true
+      elsif code == 200 && response['status'] == 'pending'
+        pending!
+        return false
+      else
+        raise StandardError, response['message']
+      end
     end
 
     ##
@@ -279,7 +314,7 @@ module Defender
       headers = http_headers
       unless headers.nil?
         options['http-headers'] = headers.to_a.map do |kv|
-          kv = kv.join(": ") if kv.respond_to?(:join)
+          kv.respond_to?(:join) ? kv.join(": ") : kv
         end.join("\n")
       end
 
@@ -305,10 +340,10 @@ module Defender
     #   better accuracy. Do not poll the servers more than once every 30 seconds
     #   for each document. To avoid polling, set the callback URL with
     #   {Defender.async_callback}. You can get the information from the server
-    #   using the {#refresh} method or calling {Document.find} with the
+    #   using the {#refresh!} method or calling {Document.find} with the
     #   signature.
     #
-    # @todo Implement asynchronous calls.
+    # @see #pending?
     #
     # @raise ArgumentError if a required field is not set.
     # @raise StandardError if the server says something went wrong.
@@ -318,10 +353,18 @@ module Defender
       if sig = signature # The document is submitted to Defensio
         code, response = Defender.put(Defender.uri("/documents/#{sig}"), {'allow' => allow?})
       else
-        code, response = Defender.post(Defender.uri("/documents"), attributes_hash)
+        hsh = attributes_hash
+        if async
+          hsh['async'] = 'true'
+          hsh['async-callback'] = Defender.async_callback if Defender.async_callback
+        end
+        code, response = Defender.post(Defender.uri("/documents"), hsh)
       end
-      if response['status'] == 'success'
+      if code == 200 && response['status'] == 'success'
         set_attributes(response)
+      elsif code == 200 && response['status'] == 'pending'
+        set_attributes(response) # Some fields are blank
+        @pending = true
       else
         raise StandardError, response['message']
       end
@@ -334,6 +377,25 @@ module Defender
       end
       @profane = attributes['profanity-match']
       undefine_setters
+    end
+
+    ##
+    # Filters the provided fields. The filtering is based on a default
+    # dictionary and one previously configured by the user.
+    #
+    # @param [Array<Symbol>] *args The fields to filter (like `:content`,
+    #   `:author_name`, etc.)
+    def filter!(*args)
+      filter = {}
+      args.each {|arg| filter[arg] = __send__(arg) }
+      code, response = Defender.post(Defender.uri('profanity-filter'), filter)
+      if code == 200 && response['status'] == 'success'
+        response['filtered'].each do |key, value|
+          self.instance_variable_set(:"@#{key}", value)
+        end
+      else
+        raise StandardError, response['message']
+      end
     end
 
     private
