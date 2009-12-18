@@ -1,5 +1,82 @@
 module Defender
   class Statistics
+    class Extended
+      ##
+      # The starting date.
+      #
+      # @return [String] Is in the format YYYY-MM-DD.
+      attr_reader :from
+
+      ##
+      # The ending date.
+      #
+      # @return [String] Is in the form YYYY-MM-DD.
+      attr_reader :to
+
+      ##
+      # Provides a set of URLs that chart the data provided in the data array.
+      #
+      # The Hash returned will have the keys `:accuracy`, `:unwanted` and
+      # `:legitimate`, which all refer to the same fields in the {#data} hash.
+      #
+      # @return [Hash{Symbol => String}]
+      attr_reader :chart_urls
+
+      ##
+      # The set of dates within the retrieved period.
+      #
+      # The keys are the date in YYYY-MM-DD format.
+      #
+      # Each date has the following keys:
+      #
+      # * `:false_negatives` - The number of false negatives for the specified
+      #   date.
+      # * `:false_positives` - The number of false positives for the specified
+      #   date.
+      # * `:legitimate` - The number of legitimate documents processed on the
+      #   specified date.
+      # * `:accuracy` - How accurate Defensio has recently been for the current
+      #   user on the specified date. This is returned as a Float between 0
+      #   and 1. For example, 0.9525 means 95.25% accurate.
+      # * `:unwanted` - The number of unwanted documents processed on the
+      #   specified date.
+      #
+      # @return [Hash{String => Hash{Symbol => Object}}]
+      attr_reader :data
+
+      ##
+      # Retrieves extended statistics from a given date to another one.
+      #
+      # @param [#strftime, #to_s] from The starting date.
+      # @param [#strftime, #to_s] to The ending date.
+      def initialize(from, to)
+        @from = from.respond_to?(:strftime) ? from.strftime('%Y-%m-%d') : from.to_s
+        @to = to.respond_to?(:strftime) ? to.strftime('%Y-%m-%d') : to.to_s
+
+        code, response = Defender.get(Defender.uri('extended-stats'), "from" => @from, "to" => @to)
+        if code == 200 && response['status'] == 'success'
+          @chart_urls = {
+            :accuracy => response['chart-urls']['recent-accuracy'],
+            :unwanted => response['chart-urls']['total-unwanted'],
+            :legitimate => response['chart-urls']['total-legitimate']
+          }
+
+          @data = {}
+          response['data'].each do |data|
+            @data[data['date']] = {
+              :false_negatives => data['false-negatives'],
+              :false_positives => data['false-positives'],
+              :legitimate => data['legitimate'],
+              :accuracy => data['recent-accuracy'],
+              :unwanted => data['unwanted']
+            }
+          end
+        else
+          raise StandardError, response['message']
+        end
+      end
+    end
+
     ##
     # The version of the Defensio API being used. Should be the same as
     # {Defender::API_VERSION}.
@@ -67,21 +144,12 @@ module Defender
     attr_reader :unwanted_total
 
     ##
-    # Initialize the object and retrieve statistics. If no parameters are given,
-    # basic statistics are given. If two Date objects are passed, extended
-    # satistics will be retrieved for this timespan.
-    #
-    # @param [Date] from The starting date.
-    # @param [Date] to The ending date.
+    # Initialize the object and retrieve basic statistics.
     #
     # @raise StandardError if any of the calls to the server during retrieving
     #   of statistics fail.
-    def initialize(from=nil, to=nil)
-      if from && to
-        retrieve_extended_statistics
-      else
-        retrieve_basic_statistics
-      end
+    def initialize
+      retrieve_basic_stats
     end
 
     private
@@ -92,6 +160,7 @@ module Defender
       if code != 200
         raise StandardError, response["message"]
       else
+        @api_version = response["api-version"]
         @false_negatives = response["false-negatives"]
         @false_positives = response["false-positives"]
         @learning = response["learning"]
