@@ -254,8 +254,8 @@ module Defender
     # @return [Document]
     def self.find(signature)
       document = new()
-      code, response = Defender.get(Defender.uri("/documents/#{signature}"))
-      if code == 200
+      response = Defender.get("/#{Defender.api_key}/documents/#{signature}.json")['defensio-result']
+      if response['status'] == 'success' || response['status'] == 'pending'
         document.set_attributes(response)
         document.pending! if response['status'] == 'pending'
       else
@@ -278,11 +278,11 @@ module Defender
     # @return [true] The document was updated.
     # @return [false] The document was not updated (still pending).
     def refresh!
-      code, response = Defender.get(Defender.uri("/documents/#{signature}"))
-      if code == 200 && response['status'] == 'success'
+      response = Defender.get("/#{Defender.api_key}/documents/#{signature}.json")['defensio-result']
+      if response['status'] == 'success'
         document.set_attributes(response)
         return true
-      elsif code == 200 && response['status'] == 'pending'
+      elsif response['status'] == 'pending'
         pending!
         return false
       else
@@ -300,8 +300,8 @@ module Defender
       options = {
         'client' => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
         'platform' => platform || "ruby",
-        'content' => content || raise(ArgumentError, "The content field is required"),
-        'type' => type || raise(ArgumentError, "The type field is required")
+        'content' => content,
+        'type' => type
       }
       [
         :author_email, :author_ip, :author_logged_in, :author_name, :author_openid,
@@ -346,29 +346,31 @@ module Defender
     # @see #pending?
     #
     # @raise ArgumentError if a required field is not set.
-    # @raise StandardError if the server says something went wrong.
-    # @return [true] Returns true if everything went ok, raises an error
-    #   otherwise.
+    # @return [Boolean] Whether the record was saved or not.
     def save(async=false)
       if sig = signature # The document is submitted to Defensio
-        code, response = Defender.put(Defender.uri("/documents/#{sig}"), {'allow' => allow?})
+        response = Defender.put("/#{Defender.api_key}/documents/#{sig}.json", :allow => allow?)['defensio-result']
       else
         hsh = attributes_hash
+        raise ArgumentError, 'The content field is required' if attributes_hash['content'].nil?
+        raise ArgumentError, 'The type field is required' if attributes_hash['type'].nil?
+
         if async
           hsh['async'] = 'true'
           hsh['async-callback'] = Defender.async_callback if Defender.async_callback
         end
-        code, response = Defender.post(Defender.uri("/documents"), hsh)
+        response = Defender.post("/#{Defender.api_key}/documents.json", hsh)['defensio-result']
       end
-      if code == 200 && response['status'] == 'success'
+      if response['status'] == 'success'
         set_attributes(response)
-      elsif code == 200 && response['status'] == 'pending'
+        return true
+      elsif response['status'] == 'pending'
         set_attributes(response) # Some fields are blank
         @pending = true
+        return true
       else
-        raise StandardError, response['message']
+        return false
       end
-      true
     end
 
     def set_attributes(attributes)
@@ -388,8 +390,8 @@ module Defender
     def filter!(*args)
       filter = {}
       args.each {|arg| filter[arg] = __send__(arg) }
-      code, response = Defender.post(Defender.uri('profanity-filter'), filter)
-      if code == 200 && response['status'] == 'success'
+      response = Defender.post("/#{Defender.api_key}/profanity-filter.json", filter)['defensio-result']
+      if response['status'] == 'success'
         response['filtered'].each do |key, value|
           self.instance_variable_set(:"@#{key}", value)
         end

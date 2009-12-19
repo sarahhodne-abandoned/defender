@@ -1,26 +1,17 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Defender::Statistics do
+  before(:each) do
+    FakeWeb.clean_registry
+  end
+
   it "retrieves basic statistics from the server" do
-    Defender.expects(:request).with(:get, "/2.0/users/foobar/basic-stats.yaml", nil).
-      returns([200,
-        {
-          "api-version" => "2.0",
-          "status" => "success",
-          "message" => "",
-          "false-negatives" => 42,
-          "false-positives" => 1,
-          "learning" => true,
-          "learning-status" => "foo!",
-          "legitimate" => { "total" => 15 },
-          "recent-accuracy" => 0.9525,
-          "unwanted" => {
-            "malicious" => 2,
-            "spam" => 5,
-            "total" => 7
-          }
-        }
-      ])
+    FakeWeb.register_uri(:get, "http://api.defensio.com/2.0/users/foobar/basic-stats.json",
+                         :body => '{"defensio-result":{"api-version":"2.0","status":"success","message":"",
+                         "false-negatives":42,"false-positives":1,"learning":true,
+                         "learning-status":"foo!","legitimate":{"total":15},
+                         "recent-accuracy":0.9525,"unwanted":{"malicious":2,"spam":5,
+                         "total":7}}}')
 
     Defender.api_key = "foobar"
     statistics = Defender::Statistics.new
@@ -34,12 +25,13 @@ describe Defender::Statistics do
     statistics.unwanted_spam.should == 5
     statistics.unwanted_total.should == 7
   end
-  
-  it "raises a StandardError if the server fails" do
-    Defender.expects(:request).returns([500,
-      { "status" => "failed", "message" => "Oops" }]
-    )
 
+  it "raises a StandardError if the server fails" do
+    FakeWeb.register_uri(:get, "http://api.defensio.com/2.0/users/foobar/basic-stats.json",
+                         :body => '{"defensio-result":{"api-version":"2.0","status":"failed","message":"Oops"}}',
+                         :status => ["500", "Server Error"])
+
+    Defender.api_key = "foobar"
     lambda { Defender::Statistics.new }.should raise_error(StandardError, "Oops")
   end
 end

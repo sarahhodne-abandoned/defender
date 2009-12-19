@@ -53,8 +53,8 @@ module Defender
         @from = from.respond_to?(:strftime) ? from.strftime('%Y-%m-%d') : from.to_s
         @to = to.respond_to?(:strftime) ? to.strftime('%Y-%m-%d') : to.to_s
 
-        code, response = Defender.get(Defender.uri('extended-stats'), "from" => @from, "to" => @to)
-        if code == 200 && response['status'] == 'success'
+        response = Defender.get("/#{Defender.api_key}/extended-stats.json", :from => @from, :to => @to)['defensio-result']
+        if response['status'] == 'success'
           @chart_urls = {
             :accuracy => response['chart-urls']['recent-accuracy'],
             :unwanted => response['chart-urls']['total-unwanted'],
@@ -155,11 +155,9 @@ module Defender
     private
 
     def retrieve_basic_stats
-      code, response = Defender.get(Defender.uri("/basic-stats"))
+      response = Defender.get("/#{Defender.api_key}/basic-stats.json")['defensio-result']
 
-      if code != 200
-        raise StandardError, response["message"]
-      else
+      if response['status'] == 'success'
         @api_version = response["api-version"]
         @false_negatives = response["false-negatives"]
         @false_positives = response["false-positives"]
@@ -170,6 +168,8 @@ module Defender
         @unwanted_malicious = response["unwanted"]["malicious"]
         @unwanted_spam = response["unwanted"]["spam"]
         @unwanted_total = response["unwanted"]["total"]
+      else
+        raise StandardError, response['message']
       end
     end
   end

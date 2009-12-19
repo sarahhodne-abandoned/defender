@@ -10,6 +10,7 @@ begin
     gem.email = "henrik.hodne@binaryhex.com"
     gem.homepage = "http://github.com/dvyjones/defender"
     gem.authors = ["Henrik Hodne"]
+    gem.add_dependency "httparty", "~> 0.4.3"
     gem.add_development_dependency "rspec", "~> 1.2.9"
     gem.add_development_dependency "yard", "~> 0.4.0" 
     gem.add_development_dependency "mocha", "~> 0.9.8"

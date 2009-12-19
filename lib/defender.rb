@@ -1,6 +1,4 @@
-require 'yaml'
-require 'net/http'
-require 'cgi'
+require 'httparty'
 
 require 'defender/document'
 require 'defender/statistics'
@@ -8,13 +6,14 @@ require 'defender/statistics'
 module Defender
   VERSION = "0.2.0"
 
+  include HTTParty
+
   # The Defensio API version currently supported by Defender
   API_VERSION = "2.0"
 
-  SERVER_HOSTNAME = "api.defensio.com"
-
-  HTTP_METHODS =  {:get => Net::HTTP::Get, :post => Net::HTTP::Post,
-                   :put => Net::HTTP::Put, :delete => Net::HTTP::Delete}
+  # HTTParty config
+  format :json
+  base_uri "api.defensio.com/#{API_VERSION}/users"
 
   class << self
     ##
@@ -54,109 +53,15 @@ module Defender
   #
   # Set the API key using {Defender.api_key}.
   #
-  # @raise [StandardError] If an unexpected result was hit (not valid, nor
-  #   invalid), then a StandardError will be raised.
   # @return [Boolean] Whether the API key was valid or not.
   def self.check_api_key
     key = Defender.api_key
     return false unless key
-    code, resp = get(uri())
-    case code
-    when 200
+    resp = get("/#{key}.json")['defensio-result']
+    if resp['status'] == 'success'
       return true
-    when 401, 404
-      return false
     else
-      raise StandardError, resp['message']
+      return false
     end
-  end
-
-  ##
-  # Sends a GET request and parses the YAML response to a hash.
-  #
-  # @param [String] uri The URI to GET.
-  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
-  #   URL encoded automatically.
-  def self.get(uri, attributes=nil)
-    if attributes && attributes.length > 0
-      uri = uri + "?" + hash_to_http(attributes)
-    end
-    request(:get, uri)
-  end
-
-  ##
-  # Sends a POST request and parses the YAML response to a hash.
-  #
-  # @param [String] uri The URI to POST.
-  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
-  #   URL encoded automatically.
-  def self.post(*args)
-    request(:post, *args)
-  end
-
-  ##
-  # Sends a PUT request and parses the YAML response to a hash.
-  #
-  # @param [String] uri The URI to PUT.
-  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
-  #   URL encoded automatically.
-  def self.put(*args)
-    request(:put, *args)
-  end
-
-  ##
-  # Sends a DELETE request and parses the YAML response to a hash.
-  #
-  # @param [String] uri The URI to DELETE.
-  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass. Will be
-  #   URL encoded automatically.
-  def self.delete(*args)
-    request(:delete, *args)
-  end
-
-  private
-
-  ##
-  # Returns a URI mixing in the API version and the API key.
-  #
-  # @param [String] uri The portion of the URI after the API key and before the
-  # format of the response (if any).
-  def self.uri(uri="")
-    "/#{API_VERSION}/users/#{api_key}" + uri + ".yaml"
-  end
-
-  ##
-  # The method that does the HTTP requests and URL encodes the attributes.
-  # It will also parse the response from YAML and return the defensio-result
-  # field.
-  #
-  # @param [:get, :post, :put, :delete] method The HTTP method to use.
-  # @param [String] uri The URI to request.
-  # @param [Hash{#to_s => #to_s}] attributes The attributes to pass in the
-  #    body. Will be automatically URL-encoded. Do not pass this (or pass nil)
-  #    if a GET request is made, or it will raise an {ArgumentError}.
-  def self.request(method, uri, attributes=nil)
-    body = nil
-    if method != :get && attributes && attributes.length > 0
-      body = hash_to_http(attributes)
-    end
-    Net::HTTP.start(SERVER_HOSTNAME) do |http|
-      response = http.request(HTTP_METHODS[method].new(uri), body)
-      return [response.code.to_i, YAML.load(response.body)['defensio-result']]
-    end
-  end
-
-  ##
-  # Converts a Hash to a HTTP options hash, like foo=bar&baz=foobar
-  #
-  # @param [Hash{#to_s => #to_s}] hsh
-  # @return [String]
-  def self.hash_to_http(hsh)
-    http_a = ""
-    hsh.each do |key,value|
-      http_a << CGI.escape(key.to_s) << "=" <<
-        CGI.escape(value.to_s) << "&"
-    end
-    http_a[0..-2]
   end
 end
