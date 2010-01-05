@@ -19,4 +19,4 @@ Defender follows the {Semantic Versioning}[http://semver.org/] spec.
 
 == Copyright
 
-Copyright (c) 2009 Henrik Hodne. See LICENSE for details.
+Copyright (c) 2009-2010 Henrik Hodne. See LICENSE for details.
