@@ -349,11 +349,16 @@ module Defender
     # @return [Boolean] Whether the record was saved or not.
     def save(async=false)
       if sig = signature # The document is submitted to Defensio
-        response = Defender.put("/#{Defender.api_key}/documents/#{sig}.json", :allow => allow?)['defensio-result']
+        response = Defender.put("/#{Defender.api_key}/documents/#{sig}.json",
+                                :allow => allow?)['defensio-result']
       else
         hsh = attributes_hash
-        raise ArgumentError, 'The content field is required' if attributes_hash['content'].nil?
-        raise ArgumentError, 'The type field is required' if attributes_hash['type'].nil?
+        if attributes_hash['content'].nil?
+          raise ArgumentError, 'The content field is required'
+        end
+        if attributes_hash['type'].nil?
+          raise ArgumentError, 'The type field is required'
+        end
 
         if async
           hsh['async'] = 'true'
