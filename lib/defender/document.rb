@@ -350,7 +350,7 @@ module Defender
     def save(async=false)
       if sig = signature # The document is submitted to Defensio
         response = Defender.put("/#{Defender.api_key}/documents/#{sig}.json",
-                                :allow => allow?)['defensio-result']
+                                :body => { :allow => allow? })['defensio-result']
       else
         hsh = attributes_hash
         if attributes_hash['content'].nil?
@@ -364,7 +364,7 @@ module Defender
           hsh['async'] = 'true'
           hsh['async-callback'] = Defender.async_callback if Defender.async_callback
         end
-        response = Defender.post("/#{Defender.api_key}/documents.json", hsh)['defensio-result']
+        response = Defender.post("/#{Defender.api_key}/documents.json", :body => hsh)['defensio-result']
       end
       if response['status'] == 'success'
         set_attributes(response)
