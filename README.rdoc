@@ -1,6 +1,6 @@
 = defender
 
-RDocs[http://rdoc.info/projects/dvyjones/defender] | Metrics[http://getcaliper.com/caliper/project?repo=git%3A%2F%2Fgithub.com%2Fdvyjones%2Fdefender.git] | Tests[http://runcoderun.com/dvyjones/defender] | IRC[irc://irc.freenode.net/##defender}
+YarDocs[http://yardoc.org/docs/dvyjones-defender] | Metrics[http://getcaliper.com/caliper/project?repo=git%3A%2F%2Fgithub.com%2Fdvyjones%2Fdefender.git] | Tests[http://runcoderun.com/dvyjones/defender] | IRC[irc://irc.freenode.net/##defender}
 
 This is a Ruby wrapper of the Defensio[http://defensio.com] spam filtering API. To use this library, you need an API key from Defensio. Go ahead and {get one}[http://defensio.com/signup/].
 
