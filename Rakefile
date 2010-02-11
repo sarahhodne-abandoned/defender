@@ -10,10 +10,11 @@ begin
     gem.email = "henrik.hodne@binaryhex.com"
     gem.homepage = "http://github.com/dvyjones/defender"
     gem.authors = ["Henrik Hodne"]
-    gem.add_dependency "httparty", "~> 0.4.3"
-    gem.add_development_dependency "rspec", "~> 1.2.9"
-    gem.add_development_dependency "yard", "~> 0.4.0" 
-    gem.add_development_dependency "fakeweb", "~> 1.2.7"
+    gem.add_dependency "defensio", "~> 0.9.1"
+    gem.add_development_dependency "rspec", "~> 1.3.0"
+    gem.add_development_dependency "yard", "~> 0.5.3"
+    gem.add_development_dependency "mocha", "~> 0.9.8"
+    
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new

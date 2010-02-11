@@ -2,19 +2,29 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Defender::Document do
   before(:each) do
-    FakeWeb.clean_registry
+    Defender.api_key = "foobar"
+    @defensio = Defender.defensio
   end
 
   context "creating documents" do
     it "should allow an innocent document to be posted when given only required options" do
-      FakeWeb.register_uri(:post, "http://api.defensio.com/2.0/users/foobar/documents.json",
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"success","message":"","signature":"baz",
-                                      "allow":true,"classification":"innocent","spaminess":0.1,
-                                      "profanity-match":false}}')
-      Defender.api_key = "foobar"
       document = Defender::Document.new
-      document.content = "[innocent,0.1]"
+      document.content = '[innocent,0.1]'
       document.type = :test
+      
+      @defensio.expects(:post_document).with(document.attributes_hash).returns(
+        [200, {
+          'api-version' => '2.0',
+          'status' => 'success',
+          'message' => '',
+          'signature' => 'baz',
+          'allow' => true,
+          'classification' => 'innocent',
+          'spaminess' => 0.1,
+          'profanity-match' => false
+        }]
+      )
+      
       document.save
 
       document.allow?.should be_true
@@ -25,28 +35,47 @@ describe Defender::Document do
     end
 
     it "marks an asynchronously requested document as pending" do
-      FakeWeb.register_uri(:post, "http://api.defensio.com/2.0/users/foobar/documents.json",
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"pending","message":"","signature":"baz",
-                           "allow":null,"classification":null,"spaminess":null,"profanity-match":null}}')
-
       Defender.api_key = "foobar"
       document = Defender::Document.new
       document.content = "[innocent,0.1]"
       document.type = :test
+
+      @defensio.expects(:post_document).with(document.attributes_hash.merge({'async' => 'true'})).returns(
+        [200, {
+          'api-version' => '2.0',
+          'status' => 'pending',
+          'message' => '',
+          'signature' => 'baz',
+          'allow' => nil,
+          'classification' => nil,
+          'spaminess' => nil,
+          'profanity-match' => nil
+        }]
+      )
+
       document.save(true)
 
       document.pending?.should be_true
     end
 
     it "should not allow a spammy document to be posted when given only required options" do
-      FakeWeb.register_uri(:post, "http://api.defensio.com/2.0/users/foobar/documents.json",
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"success","message":"","signature":"bar",
-                           "allow":false,"classification":"spam","spaminess":0.89,"profanity-match":false}}')
-
-      Defender.api_key = "foobar"
       document = Defender::Document.new
       document.content = "[spam,0.89]"
       document.type = :test
+
+      @defensio.expects(:post_document).with(document.attributes_hash).returns(
+        [200, {
+          'api-version' => '2.0',
+          'status' => 'success',
+          'message' => '',
+          'signature' => 'bar',
+          'allow' => false,
+          'classification' => 'spam',
+          'spaminess' => 0.89,
+          'profanity-match' => false
+        }]
+      )
+
       document.save
 
       document.allow?.should be_false
@@ -82,25 +111,38 @@ describe Defender::Document do
     end
 
     it "returns false on server error" do
-      FakeWeb.register_uri(:post, "http://api.defensio.com/2.0/users/foobar/documents.json",
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"failed","message":"Oopsies"}}',
-                           :status => ["500", "Server Error"])
-      Defender.api_key = "foobar"
       document = Defender::Document.new
       document.content = "[spam,0.89]"
       document.type = :test
+      
+      @defensio.expects(:post_document).with(document.attributes_hash).returns(
+        [500, {
+          'api-version' => '2.0',
+          'status' => 'failed',
+          'message' => 'Oopsies'
+        }]
+      )
+
       document.save.should be_false
     end
   end
 
   context "finding documents" do
     it "sets the attributes for a found object" do
-      FakeWeb.register_uri(:get, "http://api.defensio.com/2.0/users/foobar/documents/baz.json",
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"success","message":"",
-                           "signature":"baz","allow":false,"classification":"spam","spaminess":0.89,"profanity-match":false}}')
+      @defensio.expects(:get_document).with('baz').returns(
+        [200, {
+          'api-version' => '2.0',
+          'status' => 'success',
+          'message' => '',
+          'signature' => 'baz',
+          'allow' => false,
+          'classification' => 'spam',
+          'spaminess' => 0.89,
+          'profanity-match' => false
+        }]
+      )
 
-      Defender.api_key = "foobar"
-      document = Defender::Document.find("baz")
+      document = Defender::Document.find('baz')
       document.allow?.should be_false
       document.classification.should == "spam"
       document.spaminess.should == 0.89
@@ -109,29 +151,51 @@ describe Defender::Document do
     end
 
     it "raises a StandardError on server error" do
-      FakeWeb.register_uri(:get, "http://api.defensio.com/2.0/users/foobar/documents/baz.json",
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"failed","message":"oops"}}',
-                           :status => ["500", "Server Error"])
+      @defensio.expects(:get_document).with('baz').returns(
+        [500, {
+          'api-version' => '2.0',
+          'status' => 'failed',
+          'message' => 'oops'
+        }]
+      )
 
-      Defender.api_key = "foobar"
-      lambda { Defender::Document.find("baz") }.should raise_error(StandardError, "oops")
+      lambda { Defender::Document.find('baz') }.should raise_error(StandardError, 'oops')
     end
   end
 
   context "updating documents" do
     it "only sets the allow attribute" do
-      FakeWeb.register_uri(:get, 'http://api.defensio.com/2.0/users/foobar/documents/baz.json',
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"success","message":"",
-                           "signature":"baz","allow":false,"classification":"spam","spaminess":0.89,"profanity-match":false}}')
-      FakeWeb.register_uri(:put, 'http://api.defensio.com/2.0/users/foobar/documents/baz.json',
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"success","message":"",
-                           "signature":"","allow":true,"classification":"spam","spaminess":0.89,"profanity-match":false"}}')
+      @defensio.expects(:get_document).with('baz').returns(
+        [200, {
+          'api-version' => '2.0',
+          'status' => 'success',
+          'message' => '',
+          'signature' => 'baz',
+          'allow' => false,
+          'classification' => 'spam',
+          'spaminess' => 0.89,
+          'profanity-match' => false
+        }]
+      )
 
-      Defender.api_key = 'foobar'
       document = Defender::Document.find('baz')
       document.allow = true
       oldcontent = document.content
       lambda { document.content = 'foobar!' }.should raise_error(NameError)
+      
+      @defensio.expects(:put_document).with('baz', {'allow' => true}).returns(
+        [200, {
+          'api-version' => '2.0',
+          'status' => 'success',
+          'message' => '',
+          'signature' => 'baz',
+          'allow' => true,
+          'classification' => 'spam',
+          'spaminess' => 0.89,
+          'profanity-match' => false
+        }]
+      )
+      
       document.save.should be_true
       document.content.should == oldcontent
       document.content.should_not == 'foobar!'
@@ -139,16 +203,30 @@ describe Defender::Document do
     end
 
     it 'returns false when the server encounts an error' do
-      FakeWeb.register_uri(:get, 'http://api.defensio.com/2.0/users/foobar/documents/baz.json',
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"success","message":"",
-                           "signature":"baz","allow":false,"classification":"spam","spaminess":0.89,"profanity-match":false}}')
-      FakeWeb.register_uri(:put, 'http://api.defensio.com/2.0/users/foobar/documents/baz.json',
-                           :body => '{"defensio-result":{"api-version":"2.0","status":"failed","message":"UTTER FAIL!"}}',
-                           :status => ['500', 'Server Error'])
+      @defensio.expects(:get_document).with('baz').returns(
+        [200, {
+          'api-version' => '2.0',
+          'status' => 'success',
+          'message' => '',
+          'signature' => 'baz',
+          'allow' => false,
+          'classification' => 'spam',
+          'spaminess' => 0.89,
+          'profanity-match' => false
+        }]
+      )
 
-      Defender.api_key = 'foobar'
       document = Defender::Document.find('baz')
       document.allow = true
+      
+      @defensio.expects(:put_document).with('baz', {'allow' => true}).returns(
+        [500, {
+          'api-version' => '2.0',
+          'status' => 'failed',
+          'message' => 'UTTER FAIL!'
+        }]
+      )
+      
       document.save.should be_false
     end
   end

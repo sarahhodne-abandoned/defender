@@ -254,19 +254,14 @@ module Defender
     # @return [Document]
     def self.find(signature)
       document = new()
-      response = Defender.get("/#{Defender.api_key}/documents/#{signature}.json")['defensio-result']
-      if response['status'] == 'success' || response['status'] == 'pending'
+      code, response = Defender.defensio.get_document(signature)
+      if code == 200 && (response['status'] == 'success' || response['status'] == 'pending')
         document.set_attributes(response)
         document.pending! if response['status'] == 'pending'
       else
         raise StandardError, response['message']
       end
-      document
-    end
-
-    ##
-    # Create a new document.
-    def initialize()
+      return document
     end
 
     ##
@@ -278,7 +273,7 @@ module Defender
     # @return [true] The document was updated.
     # @return [false] The document was not updated (still pending).
     def refresh!
-      response = Defender.get("/#{Defender.api_key}/documents/#{signature}.json")['defensio-result']
+      code, response = Defender.defensio.get_document(signature)
       if response['status'] == 'success'
         document.set_attributes(response)
         return true
@@ -298,17 +293,17 @@ module Defender
     # @return [Hash{String => String}]
     def attributes_hash
       options = {
-        'client' => "Defender | #{Defender::VERSION} | Henrik Hodne | henrik.hodne@binaryhex.com",
-        'platform' => platform || "ruby",
-        'content' => content,
-        'type' => type
+        'platform' => platform.to_s || 'ruby',
+        'content' => content.to_s,
+        'type' => type.to_s
       }
       [
         :author_email, :author_ip, :author_logged_in, :author_name, :author_openid,
         :author_trusted, :author_url, :browser_cookies, :browser_javascript,
         :document_permalink, :referrer, :title, :parent_document_permalink
       ].each do |symbol|
-        options[symbol.to_s.gsub("_", "-")] = self.send(symbol)
+        value = self.send(symbol)
+        options[symbol.to_s.gsub("_", "-")] = value.to_s unless value.nil?
       end
 
       headers = http_headers
@@ -319,16 +314,12 @@ module Defender
       end
 
       pddate = parent_document_date
-      options['parent-document-date'] = pddate.respond_to?(:strftime) ?
-        pddate.strftime("%Y-%m-%d") : pddate
-
-      formatted_options = {}
-
-      options.each do |key, value|
-        formatted_options[key] = value.to_s unless value.nil?
+      unless pddate.nil?
+        options['parent-document-date'] = pddate.respond_to?(:strftime) ?
+          pddate.strftime("%Y-%m-%d") : pddate.to_s
       end
 
-      formatted_options
+      options
     end
 
     ##
@@ -349,8 +340,7 @@ module Defender
     # @return [Boolean] Whether the record was saved or not.
     def save(async=false)
       if sig = signature # The document is submitted to Defensio
-        response = Defender.put("/#{Defender.api_key}/documents/#{sig}.json",
-                                :body => { :allow => allow? })['defensio-result']
+        code, response = Defender.defensio.put_document(sig, { 'allow' => allow?})
       else
         hsh = attributes_hash
         if attributes_hash['content'].nil?
@@ -364,9 +354,9 @@ module Defender
           hsh['async'] = 'true'
           hsh['async-callback'] = Defender.async_callback if Defender.async_callback
         end
-        response = Defender.post("/#{Defender.api_key}/documents.json", :body => hsh)['defensio-result']
+        code, response = Defender.defensio.post_document(hsh)
       end
-      if response['status'] == 'success'
+      if code == 200 && response['status'] == 'success'
         set_attributes(response)
         return true
       elsif response['status'] == 'pending'
@@ -395,7 +385,7 @@ module Defender
     def filter!(*args)
       filter = {}
       args.each {|arg| filter[arg] = __send__(arg) }
-      response = Defender.post("/#{Defender.api_key}/profanity-filter.json", filter)['defensio-result']
+      code, response = Defender.defensio.post_profanity_filter(filter)
       if response['status'] == 'success'
         response['filtered'].each do |key, value|
           self.instance_variable_set(:"@#{key}", value)

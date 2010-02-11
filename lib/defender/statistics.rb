@@ -25,7 +25,7 @@ module Defender
       ##
       # The set of dates within the retrieved period.
       #
-      # The keys are the date in YYYY-MM-DD format.
+      # The keys are Date objects.
       #
       # Each date has the following keys:
       #
@@ -41,7 +41,7 @@ module Defender
       # * `:unwanted` - The number of unwanted documents processed on the
       #   specified date.
       #
-      # @return [Hash{String => Hash{Symbol => Object}}]
+      # @return [Hash{Date => Hash{Symbol => Object}}]
       attr_reader :data
 
       ##
@@ -53,7 +53,7 @@ module Defender
         @from = from.respond_to?(:strftime) ? from.strftime('%Y-%m-%d') : from.to_s
         @to = to.respond_to?(:strftime) ? to.strftime('%Y-%m-%d') : to.to_s
 
-        response = Defender.get("/#{Defender.api_key}/extended-stats.json", :from => @from, :to => @to)['defensio-result']
+        code, response = Defender.defensio.get_extended_stats(:from => @from, :to => @to)
         if response['status'] == 'success'
           @chart_urls = {
             :accuracy => response['chart-urls']['recent-accuracy'],
@@ -155,19 +155,19 @@ module Defender
     private
 
     def retrieve_basic_stats
-      response = Defender.get("/#{Defender.api_key}/basic-stats.json")['defensio-result']
+      code, response = Defender.defensio.get_basic_stats
 
-      if response['status'] == 'success'
-        @api_version = response["api-version"]
-        @false_negatives = response["false-negatives"]
-        @false_positives = response["false-positives"]
-        @learning = response["learning"]
-        @learning_status = response["learning-status"]
-        @legitimate_total = response["legitimate"]["total"]
-        @recent_accuracy = response["recent-accuracy"]
-        @unwanted_malicious = response["unwanted"]["malicious"]
-        @unwanted_spam = response["unwanted"]["spam"]
-        @unwanted_total = response["unwanted"]["total"]
+      if code == 200 && response['status'] == 'success'
+        @api_version = response['api-version']
+        @false_negatives = response['false-negatives']
+        @false_positives = response['false-positives']
+        @learning = response['learning']
+        @learning_status = response['learning-status']
+        @legitimate_total = response['legitimate']['total']
+        @recent_accuracy = response['recent-accuracy']
+        @unwanted_malicious = response['unwanted']['malicious']
+        @unwanted_spam = response['unwanted']['spam']
+        @unwanted_total = response['unwanted']['total']
       else
         raise StandardError, response['message']
       end

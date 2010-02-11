@@ -1,19 +1,17 @@
-require 'httparty'
+require 'defensio'
 
 require 'defender/document'
 require 'defender/statistics'
 
 module Defender
-  VERSION = "0.2.0"
+  VERSION = '0.2.1'
 
   include HTTParty
 
   # The Defensio API version currently supported by Defender
-  API_VERSION = "2.0"
+  API_VERSION = '2.0'
 
-  # HTTParty config
-  format :json
-  base_uri "api.defensio.com/#{API_VERSION}/users"
+  CLIENT = "Defender | #{Defender::VERSION} | Henrik Hodne | defender@binaryhex.com"
 
   class << self
     ##
@@ -45,6 +43,16 @@ module Defender
     # @return [String]
     attr_accessor :async_callback
   end
+  
+  ##
+  # Returns the Defensio object.
+  #
+  # @return [Defensio] An initialized Defensio object.
+  #
+  # @see http://yardoc.org/docs/defensio-defensio-ruby/Defensio
+  def self.defensio
+  	@defensio ||= Defensio.new(self.api_key, Defender::CLIENT)
+  end
 
   ##
   # Determines if the given API key is valid or not. This should only be used
@@ -55,10 +63,8 @@ module Defender
   #
   # @return [Boolean] Whether the API key was valid or not.
   def self.check_api_key
-    key = Defender.api_key
-    return false unless key
-    resp = get("/#{key}.json")['defensio-result']
-    if resp['status'] == 'success'
+    code, response = defensio.get_user
+    if code == 200 && response['status'] == 'success'
       return true
     else
       return false

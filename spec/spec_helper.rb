@@ -6,9 +6,8 @@ require 'rubygems'
 require 'defender'
 require 'spec'
 require 'spec/autorun'
-require 'fakeweb'
-
-FakeWeb.allow_net_connect = false
+require 'mocha'
 
 Spec::Runner.configure do |config|
+  config.mock_with :mocha
 end
