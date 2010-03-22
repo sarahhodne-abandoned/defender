@@ -6,8 +6,6 @@ require 'defender/statistics'
 module Defender
   VERSION = '0.2.1'
 
-  include HTTParty
-
   # The Defensio API version currently supported by Defender
   API_VERSION = '2.0'
 
@@ -43,7 +41,7 @@ module Defender
     # @return [String]
     attr_accessor :async_callback
   end
-  
+
   ##
   # Returns the Defensio object.
   #
@@ -51,7 +49,7 @@ module Defender
   #
   # @see http://yardoc.org/docs/defensio-defensio-ruby/Defensio
   def self.defensio
-  	@defensio ||= Defensio.new(self.api_key, Defender::CLIENT)
+    @defensio ||= Defensio.new(self.api_key, Defender::CLIENT)
   end
 
   ##
