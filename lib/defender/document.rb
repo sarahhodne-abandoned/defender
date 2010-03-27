@@ -4,6 +4,7 @@ module Defender
     alias :allow? :allow
 
     attr_reader :data
+    attr_reader :signature
 
     def initialize(options={})
       @options = options
@@ -21,6 +22,7 @@ module Defender
       else
         code, data = Defender.defensio.post_document(@data)
         @allow = data['allow']
+        @signature = data['signature']
         @saved = true
       end
     end
