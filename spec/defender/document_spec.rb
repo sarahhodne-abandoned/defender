@@ -41,7 +41,7 @@ module Defender
 
         defensio.should_receive(:post_document).with(@document.data).and_return([200, {'allow' => true, 'signature' => 'foobar'}])
 
-        defensio.save
+        @document.save
 
         @document.signature.should == 'foobar'
       end
