@@ -42,6 +42,8 @@ end
 task :spec => :check_dependencies
 task :default => :spec
 
+task :test => [:features, :spec]
+
 begin
   require 'yard'
   YARD::Rake::YardocTask.new do |conf|
