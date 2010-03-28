@@ -61,5 +61,20 @@ module Defender
         @document.save
       end
     end
+
+    describe '#saved?' do
+      it 'returns false for new objects' do
+        @document.saved?.should be_false
+      end
+
+      it 'returns true for objects that have been saved' do
+        defensio = double('defensio')
+        Defender.defensio = defensio
+        defensio.should_receive(:post_document).with(@document.data).and_return([200, {'allow' => true}])
+
+        @document.save
+        @document.saved?.should be_true
+      end
+    end
   end
 end
