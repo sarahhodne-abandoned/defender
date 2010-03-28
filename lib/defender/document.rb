@@ -6,8 +6,7 @@ module Defender
     attr_reader :data
     attr_reader :signature
 
-    def initialize(options={})
-      @options = options
+    def initialize
       @data = {}
       @saved = false
     end
