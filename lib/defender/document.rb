@@ -1,7 +1,7 @@
 module Defender
   class Document
     attr_accessor :allow
-    alias :allow? :allow
+    alias_method :allow?, :allow
 
     attr_reader :data
     attr_reader :signature
@@ -17,9 +17,9 @@ module Defender
 
     def save
       if saved?
-        code, data = Defender.defensio.put_document({:allow => @allow})
+        _code, data = Defender.defensio.put_document({:allow => @allow})
       else
-        code, data = Defender.defensio.post_document(@data)
+        _code, data = Defender.defensio.post_document(@data)
         @allow = data['allow']
         @signature = data['signature']
         @saved = true
