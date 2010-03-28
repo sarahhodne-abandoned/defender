@@ -61,6 +61,7 @@ Meta
 * Home: <http://github.com/dvyjones/defender/>
 * Docs: <http://yardoc.org/docs/dvyjones-defender/>
 * Bugs: <http://github.com/dvyjones/defender/issues>
+* List: <defender@librelist.com>
 * Gems: <http://gemcutter.org/gems/defender>
 
 This project uses [Semantic Versioning][sv].
@@ -75,3 +76,4 @@ Henrik Hodne :: dvyjones@binaryhex.com :: @dvyjones
 [1]: http://help.github.com/forking/
 [2]: http://github.com/dvyjones/defender/issues
 [sv]: http://semver.org
+[cb]: http://wiki.github.com/dvyjones/defender/contributing
