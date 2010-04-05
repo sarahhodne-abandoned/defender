@@ -9,7 +9,13 @@ module Defender
     attr_accessor :allow
     alias_method :allow?, :allow
 
-    attr_reader :data
+    ##
+    # The information about the document. This hash accepts so many parameters
+    # I won't list them here. Go look at the [Defensio API docs]
+    # (http://defensio.com/api) instead.
+    #
+    # @return [Hash{#to_s => #to_s}]
+    attr_accessor :data
 
     ##
     # A unique identifier for the document.
