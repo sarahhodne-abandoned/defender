@@ -7,3 +7,4 @@ Feature: Admin retrieves document
     Given I have submitted a document
     When I retrieve the document from the server
     Then it should have the same data
+    And it should have the same signature

@@ -53,5 +53,9 @@ Then /^it should be marked as spam$/ do
 end
 
 Then /^it should have the same data$/ do
-  @new_document.data.should == @document.data
+  @new_document.allow?.should == @document.allow?
+end
+
+Then /^it should have the same signature$/ do
+  @new_document.signature.should == @document.signature
 end

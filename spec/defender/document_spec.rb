@@ -49,14 +49,14 @@ module Defender
       it 'sends a PUT and not a POST if the document has been sent before' do
         defensio = double('defensio')
         Defender.defensio = defensio
-        @document.data[:content] = '[innocent,0.1]'
 
-        defensio.should_receive(:post_document).with(@document.data).and_return([200, {'allow' => true}])
+        defensio.should_receive(:get_document).with('foo').and_return([200, {'allow' => true}])
 
-        @document.save
+        @document = Defender::Document.find('foo')
+
         @document.allow = false
 
-        defensio.should_receive(:put_document).with({:allow => false}).and_return([200, {'allow' => false}])
+        defensio.should_receive(:put_document).with('foo', {:allow => false}).and_return([200, {'allow' => false}])
 
         @document.save
       end
