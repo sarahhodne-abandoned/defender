@@ -24,10 +24,23 @@ module Defender
     end
 
     describe '#save' do
-      it 'queries defensio for the data' do
-        defensio = double('defensio')
-        Defender.defensio = defensio
+      let(:defensio) { double('defensio') }
+      before(:each) { Defender.defensio = defensio }
+
+      it 'rewrites the data hash keys' do
         @document.data[:content] = '[innocent,0.1]'
+
+        data = @document.data
+        data['content'] = data[:content]
+        data.delete(:content)
+
+        defensio.should_receive(:post_document).with(data).and_return([200, {'allow' => true}])
+
+        @document.save
+      end
+
+      it 'queries defensio for the data' do
+        @document.data['content'] = '[innocent,0.1]'
 
         defensio.should_receive(:post_document).with(@document.data).and_return([200, {'allow' => true}])
 
@@ -35,9 +48,7 @@ module Defender
       end
 
       it 'saves the signature' do
-        defensio = double('defensio')
-        Defender.defensio = defensio
-        @document.data[:content] = '[innocent,0.1]'
+        @document.data['content'] = '[innocent,0.1]'
 
         defensio.should_receive(:post_document).with(@document.data).and_return([200, {'allow' => true, 'signature' => 'foobar'}])
 
@@ -47,9 +58,6 @@ module Defender
       end
 
       it 'sends a PUT and not a POST if the document has been sent before' do
-        defensio = double('defensio')
-        Defender.defensio = defensio
-
         defensio.should_receive(:get_document).with('foo').and_return([200, {'allow' => true}])
 
         @document = Defender::Document.find('foo')

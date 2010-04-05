@@ -14,6 +14,9 @@ module Defender
     # I won't list them here. Go look at the [Defensio API docs]
     # (http://defensio.com/api) instead.
     #
+    # Defender will replace all underscores in keys with dashes, so you can use
+    # `:author_email` instead of `'author-email'`.
+    #
     # @return [Hash{#to_s => #to_s}]
     attr_accessor :data
 
@@ -72,6 +75,10 @@ module Defender
       if saved?
         _code, data = Defender.defensio.put_document(@signature, {:allow => @allow})
       else
+        data = {}
+        @data.each { |k,v|
+          data[k.to_s.gsub('_','-')] = v.to_s
+        }
         _code, data = Defender.defensio.post_document(@data)
         @allow = data['allow']
         @signature = data['signature']
