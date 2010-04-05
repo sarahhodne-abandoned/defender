@@ -13,6 +13,57 @@ other similarities. It can also see the difference between malicious
 material and spammy material.
 
 
+Overview
+--------
+
+With Defender you can submit documents to Defensio, which will look for
+spam and malicious content in the documents.
+
+A document contains content to be analyzed by Defensio, or that has been
+analyzed.
+
+Submitting documents to Defensio is really easy. Here's a barebones
+example:
+
+    require 'defender'
+    document = Defender::Document.new
+    document.data[:content] = 'Hello World!'
+    document.data[:type] = 'comment'
+    document.data[:platform] = 'defender'
+    document.save
+
+The `document.data` hash can contain a lot of data. The ones you see
+here are the only required ones, but you should submit as much data as
+you can. Look at the [Defensio API docs][3] for information on the
+different data you can submit.
+
+After saving the document, Defender will set the `document.allow?`,
+`document.spaminess` and
+`document.signature` attributes. The first one tells you if you should
+display the document or not on your website. The second is a float which
+tells you just how spammy the document is. This could be useful for
+sorting the documents in an admin panel. The lower the spaminess is, the
+less chance is it for it being spam. The last attribute is an unique
+identifier you should save with your document in the database. This can
+be used for retrieving the status of your document again, and for
+retraining purposes.
+
+Did I say retraining? Oh yes, you can retrain Defensio! If some spam
+went through the filters, or some legit documents were marked as spam,
+tell Defensio by setting the `document.allow` attribute and save the
+document again:
+
+    document.allow = true
+    document.save
+
+This tells Defensio that the document should've been allowed. Don't have
+access to the `document` instance any more you say? No problem, just
+retrieve it again using the signature. You did save the signature,
+didn't you?
+
+    document = Defender::Document.find(signature)
+
+
 Development
 -----------
 
@@ -75,5 +126,6 @@ Henrik Hodne :: dvyjones@binaryhex.com :: @dvyjones
 [0]: http://defensio.com
 [1]: http://help.github.com/forking/
 [2]: http://github.com/dvyjones/defender/issues
+[3]: http://defensio.com/api
 [sv]: http://semver.org
 [cb]: http://wiki.github.com/dvyjones/defender/contributing
