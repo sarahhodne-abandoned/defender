@@ -35,7 +35,8 @@ example:
 The `document.data` hash can contain a lot of data. The ones you see
 here are the only required ones, but you should submit as much data as
 you can. Look at the [Defensio API docs][3] for information on the
-different data you can submit.
+different data you can submit. Oh, and the keys can be symbols, and you
+can use underscores instead of dashes.
 
 After saving the document, Defender will set the `document.allow?`,
 `document.spaminess` and
