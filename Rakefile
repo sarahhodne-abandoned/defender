@@ -12,8 +12,7 @@ begin
     gem.authors = ["Henrik Hodne"]
     gem.add_dependency "defensio", "~> 0.9.1"
     gem.add_development_dependency "rspec", "~> 1.3.0"
-    gem.add_development_dependency "yard", "~> 0.5.3"
-    gem.add_development_dependency "mocha", "~> 0.9.8"
+    gem.add_development_dependency "yard", "~> 0.5.0"
     
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
@@ -47,8 +46,8 @@ task :test => [:features, :spec]
 begin
   require 'yard'
   YARD::Rake::YardocTask.new do |conf|
-    #conf.options = ["-mmarkdown"]
-    conf.files = ["lib/**/*.rb", "-", "LICENSE"]
+    conf.options = ['-mmarkdown', '-rREADME.markdown']
+    conf.files = ['lib/**/*.rb', '-', 'LICENSE']
   end
 rescue LoadError
   task :yard do
