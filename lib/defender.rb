@@ -1,8 +1,7 @@
+require 'defender/version'
 require 'defender/document'
 
 module Defender
-  VERSION = '0.2.0'
-
   ##
   # You most probably don't need to set this.  It is used to replace the backend
   # when running the tests.  If you for any reason need to use another backend
