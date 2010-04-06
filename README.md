@@ -22,6 +22,13 @@ spam and malicious content in the documents.
 A document contains content to be analyzed by Defensio, or that has been
 analyzed.
 
+Before starting to use Defender, you need to retrieve an API key from
+[Defensio][4]. After getting an API key, you need to let Defender know
+what it is by doing something like this somewhere in your code (before
+doing anything like saving documents):
+
+    Defender.api_key = 'my-api-key'
+
 Submitting documents to Defensio is really easy. Here's a barebones
 example:
 
@@ -128,5 +135,6 @@ Henrik Hodne :: dvyjones@binaryhex.com :: @dvyjones
 [1]: http://help.github.com/forking/
 [2]: http://github.com/dvyjones/defender/issues
 [3]: http://defensio.com/api
+[4]: http://defensio.com/signup/
 [sv]: http://semver.org
 [cb]: http://wiki.github.com/dvyjones/defender/contributing
