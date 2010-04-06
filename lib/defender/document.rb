@@ -75,7 +75,7 @@ module Defender
       if saved?
         _code, data = Defender.defensio.put_document(@signature, {:allow => @allow})
       else
-        _code, data = Defender.defensio.post_document(normalize_hash(@data))
+        _code, data = Defender.defensio.post_document(normalized_data)
         @allow = data['allow']
         @signature = data['signature']
         @saved = true
@@ -89,10 +89,10 @@ module Defender
     #
     # @param [Hash] hsh The hash to be normalized
     # @return [Hash{String => String}] The normalized hash
-    def normalize_hash(hsh)
+    def normalized_data
       normalized = {}
-      hsh.each { |k,v|
-        normalized[k.to_s.gsub('_','-')] = v.to_s
+      @data.each { |key, value|
+        normalized[key.to_s.gsub('_','-')] = value.to_s
       }
       
       normalized
