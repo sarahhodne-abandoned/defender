@@ -1,4 +1,7 @@
 module Defender
+  ##
+  # A document contains data to be analyzed by Defensio, or that has been
+  # analyzed.
   class Document
     ##
     # Whether the document should be published on your Web site or not.
