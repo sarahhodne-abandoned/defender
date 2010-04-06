@@ -30,7 +30,7 @@ begin
 rescue LoadError
   raise 'Run `gem install cucumber` to be able to run features'
 else
-  Cucumber::Rake::Task.new
+  Cucumber::Rake::Task.new(:features)
 end
 
 desc 'Run features and specs (CI task)'
