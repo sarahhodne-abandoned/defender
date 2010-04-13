@@ -82,28 +82,31 @@ module Defender
     def save
       if saved?
         ret = Defender.call(:put_document, @signature, {:allow => @allow})
-        return false if ret == false
       else
-        ret = Defender.call(:post_document, normalized_data)
-        return false if ret == false
-        data = ret.last
-        @allow = data['allow']
-        @signature = data['signature']
+        ret = Defender.call(:post_document, self.class.normalize_data(@data))
       end
+      return false if ret == false
+      return true if saved?
+
+      data = ret.last
+      @allow = data['allow']
+      @signature = data['signature']
 
       @saved = true # This will also return true, since nothing failed as we got here
     end
 
-    private
 
     ##
     # Normalizes a data hash to submit to defensio.
     #
     # @param [Hash] hsh The hash to be normalized
     # @return [Hash{String => String}] The normalized hash
-    def normalized_data
+    def self.normalize_data(data)
       normalized = {}
-      @data.each { |key, value|
+      data.each { |key, value|
+        if value.respond_to?(:strftime)
+          value = value.strftime('%Y-%m-%d')
+        end
         normalized[key.to_s.gsub('_','-')] = value.to_s
       }
       

@@ -98,5 +98,25 @@ module Defender
         @document.saved?.should be_true
       end
     end
+
+    describe '.normalize_data' do
+      it 'stringifies keys' do
+        original = {:foo => 'bar', :baz => 'foobar'}
+        normalized = {'foo' => 'bar', 'baz' => 'foobar'}
+        Defender::Document.normalize_data(original).should == normalized
+      end
+
+      it 'stringifies values' do
+        original = {'foo' => :bar, 'baz' => :foobar}
+        normalized = {'foo' => 'bar', 'baz' => 'foobar'}
+        Defender::Document.normalize_data(original).should == normalized
+      end
+
+      it 'formats date objects in the YYYY-MM-DD format' do
+        original = {'date' => Time.at(0)}
+        normalized = {'date' => '1970-01-01'}
+        Defender::Document.normalize_data(original).should == normalized
+      end
+    end
   end
 end
