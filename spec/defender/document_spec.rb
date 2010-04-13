@@ -50,7 +50,7 @@ module Defender
       it 'saves the signature' do
         @document.data['content'] = '[innocent,0.1]'
 
-        defensio.should_receive(:post_document).with(@document.data).and_return([200, {'allow' => true, 'signature' => 'foobar'}])
+        defensio.should_receive(:post_document).with(@document.data).and_return([200, {'status' => 'success', 'allow' => true, 'signature' => 'foobar'}])
 
         @document.save
 
@@ -68,6 +68,20 @@ module Defender
 
         @document.save
       end
+
+      it 'returns true if the operation succeeds' do
+        @document.data[:content] = '[innocent,0.1]'
+        defensio.should_receive(:post_document).and_return([200, {'status' => 'success', 'allow' => true, 'signature' => 'foobar'}])
+
+        @document.save.should be_true
+      end
+
+      it 'returns false if the operation fails' do
+        @document.data[:content] = '[innocent,0.1]'
+        defensio.should_receive(:post_document).and_return([500, {'status' => 'failed'}])
+
+        @document.save.should be_false
+      end
     end
 
     describe '#saved?' do
@@ -78,7 +92,7 @@ module Defender
       it 'returns true for objects that have been saved' do
         defensio = double('defensio')
         Defender.defensio = defensio
-        defensio.should_receive(:post_document).with(@document.data).and_return([200, {'allow' => true}])
+        defensio.should_receive(:post_document).with(@document.data).and_return([200, {'status' => 'success', 'allow' => true}])
 
         @document.save
         @document.saved?.should be_true

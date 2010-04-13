@@ -74,15 +74,24 @@ module Defender
     # this).
     #
     # @see #saved?
+    # @return [Boolean] Whether the save succeded or not.
     def save
       if saved?
-        _code, data = Defender.defensio.put_document(@signature, {:allow => @allow})
+        code, data = Defender.defensio.put_document(@signature, {:allow => @allow})
+        unless code == 200 && data['status'] == 'success'
+          return false
+        end
       else
-        _code, data = Defender.defensio.post_document(normalized_data)
+        code, data = Defender.defensio.post_document(normalized_data)
+        unless code == 200 && data['status'] == 'success'
+          return false
+        end
         @allow = data['allow']
         @signature = data['signature']
         @saved = true
       end
+
+      true # No failures so far, we can return true
     end
 
     private
