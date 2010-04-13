@@ -34,7 +34,7 @@ module Defender
         data['content'] = data[:content]
         data.delete(:content)
 
-        defensio.should_receive(:post_document).with(data).and_return([200, {'allow' => true}])
+        defensio.should_receive(:post_document).with(data).and_return([200, {'allow' => true, 'status' => 'success'}])
 
         @document.save
       end
@@ -58,7 +58,7 @@ module Defender
       end
 
       it 'sends a PUT and not a POST if the document has been sent before' do
-        defensio.should_receive(:get_document).with('foo').and_return([200, {'allow' => true}])
+        defensio.should_receive(:get_document).with('foo').and_return([200, {'allow' => true, 'status' => 'success'}])
 
         @document = Defender::Document.find('foo')
 

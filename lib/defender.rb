@@ -21,4 +21,20 @@ module Defender
     require 'defensio'
     @defensio ||= Defensio.new(Defender.api_key, "Defender | #{VERSION} | Henrik Hodne | dvyjones@binaryhex.com")
   end
+
+  ##
+  # Calls a defensio method and wraps in error handling.
+  #
+  # Returns false if the method failed, otherwise returns whatever the method returns
+  #
+  # @param [Symbol] method Which method to call.
+  # @return [false, Array(Fixnum, Hash)]
+  def self.call(method, *args)
+    code, data = defensio.send(method, *args)
+    if code == 200 && data['status'] == 'success'
+      [code, data]
+    else
+      false
+    end
+  end
 end

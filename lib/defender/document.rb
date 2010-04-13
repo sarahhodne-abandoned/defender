@@ -41,15 +41,19 @@ module Defender
     # content of the request (all of the data in the {#data} hash).
     #
     # @param [String] signature The signature of the document to retrieve
-    # @return [Document] The document to retrieve
+    # @return [Document,nil] The document to retrieve, or nil
     def self.find(signature)
       document = new
-      _code, data = Defender.defensio.get_document(signature)
-      document.instance_variable_set(:@saved, true)
-      document.instance_variable_set(:@allow, data['allow'])
-      document.instance_variable_set(:@signature, signature)
+      ret = Defender.call(:get_document, signature)
+      if ret
+        document.instance_variable_set(:@saved, true)
+        document.instance_variable_set(:@allow, ret.last['allow'])
+        document.instance_variable_set(:@signature, signature)
 
-      document
+        document
+      else
+        nil
+      end
     end
 
     ##
@@ -77,21 +81,17 @@ module Defender
     # @return [Boolean] Whether the save succeded or not.
     def save
       if saved?
-        code, data = Defender.defensio.put_document(@signature, {:allow => @allow})
-        unless code == 200 && data['status'] == 'success'
-          return false
-        end
+        ret = Defender.call(:put_document, @signature, {:allow => @allow})
+        return false if ret == false
       else
-        code, data = Defender.defensio.post_document(normalized_data)
-        unless code == 200 && data['status'] == 'success'
-          return false
-        end
+        ret = Defender.call(:post_document, normalized_data)
+        return false if ret == false
+        data = ret.last
         @allow = data['allow']
         @signature = data['signature']
-        @saved = true
       end
 
-      true # No failures so far, we can return true
+      @saved = true # This will also return true, since nothing failed as we got here
     end
 
     private
