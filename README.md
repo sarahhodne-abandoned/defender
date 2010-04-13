@@ -129,12 +129,13 @@ This project uses [Semantic Versioning][sv].
 Author
 ------
 
-Henrik Hodne :: dvyjones@binaryhex.com :: @dvyjones
+Henrik Hodne :: <dvyjones@binaryhex.com> :: @[dvyjones][5]
 
 [0]: http://defensio.com
 [1]: http://help.github.com/forking/
 [2]: http://github.com/dvyjones/defender/issues
 [3]: http://defensio.com/api
 [4]: http://defensio.com/signup/
+[5]: http://twitter.com/dvyjones
 [sv]: http://semver.org
 [cb]: http://wiki.github.com/dvyjones/defender/contributing
