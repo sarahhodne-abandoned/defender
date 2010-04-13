@@ -5,7 +5,7 @@ v1.0.0
 ------
 
 * <del>Proper error handling</del>
-* Document#data should accept #strftime objects on date-specific keys.
+* <del>Document#data should accept #strftime objects on date-specific keys.</del>
 
 v1.1.0
 ------
