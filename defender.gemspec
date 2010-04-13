@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
   s.add_dependency('defensio', '~> 0.9.1')
   s.add_development_dependency('rspec', '~> 1.3.0')
   s.add_development_dependency('yard', '~> 0.5.0')
+  s.add_development_dependency('cucumber', '~> 0.6.0')
   
   s.files = Dir.glob('{bin,lib}/**/*') + %w(LICENSE README.md)
   s.require_path = 'lib'
