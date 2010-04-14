@@ -3,6 +3,12 @@ require 'defender/document'
 
 module Defender
   ##
+  # Set this to your Defensio API key. Get one at http://defensio.com.
+  def self.api_key=(api_key)
+    @api_key = api_key.to_s
+  end
+
+  ##
   # You most probably don't need to set this.  It is used to replace the backend
   # when running the tests.  If you for any reason need to use another backend
   # than the defensio gem, set this.  The object needs to respond to the same
@@ -19,7 +25,7 @@ module Defender
   def self.defensio
     return @defensio  if defined?(@defensio)
     require 'defensio'
-    @defensio ||= Defensio.new(Defender.api_key, "Defender | #{VERSION} | Henrik Hodne | dvyjones@binaryhex.com")
+    @defensio ||= Defensio.new(@api_key, "Defender | #{VERSION} | Henrik Hodne | dvyjones@binaryhex.com")
   end
 
   ##
