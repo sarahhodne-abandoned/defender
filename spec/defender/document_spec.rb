@@ -57,6 +57,16 @@ module Defender
         @document.signature.should == 'foobar'
       end
 
+      it 'saves the spaminess' do
+        @document.data['content'] = '[innocent,0.1]'
+
+        defensio.should_receive(:post_document).with(@document.data).and_return([200, {'status' => 'success', 'allow' => true, 'signature' => 'foobar', 'spaminess' => 0.1}])
+
+        @document.save
+
+        @document.spaminess.should == 0.1
+      end
+
       it 'sends a PUT and not a POST if the document has been sent before' do
         defensio.should_receive(:get_document).with('foo').and_return([200, {'allow' => true, 'status' => 'success'}])
 

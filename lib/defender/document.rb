@@ -34,6 +34,14 @@ module Defender
     attr_reader :signature
 
     ##
+    # A float denoting how spammy a document is.
+    #
+    # This could be useful for sorting document in an admin interface.
+    #
+    # @return[Float<0.0,1.0>]
+    attr_reader :spaminess
+
+    ##
     # Retrieves the status of a document back from Defensio.
     #
     # Please note that this only retrieves the status of the document (like
@@ -49,6 +57,7 @@ module Defender
         document.instance_variable_set(:@saved, true)
         document.instance_variable_set(:@allow, ret.last['allow'])
         document.instance_variable_set(:@signature, signature)
+        document.instance_variable_set(:@spaminess, ret.last['spaminess'])
 
         document
       else
@@ -91,6 +100,7 @@ module Defender
       data = ret.last
       @allow = data['allow']
       @signature = data['signature']
+      @spaminess = data['spaminess']
 
       @saved = true # This will also return true, since nothing failed as we got here
     end
