@@ -1,8 +1,6 @@
 require 'rails/generators'
 
 class DefenderGenerator < Rails::Generators::NamedBase
-  hook_for :orm, :required => true
-
   def self.source_root
     File.join(File.dirname(__FILE__), 'templates')
   end
