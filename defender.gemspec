@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 lib = File.expand_path('../lib/', __FILE__)
-$:.unshift lib unless $:.include?(lib)
+$:.unshift(lib) unless $:.include?(lib)
 
 require 'defender/version'
 
@@ -17,9 +17,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = '>= 1.3.6'
 
   s.add_dependency('defensio', '~> 0.9.1')
-  s.add_development_dependency('rspec', '~> 1.3.0')
-  s.add_development_dependency('yard', '~> 0.5.0')
-  s.add_development_dependency('cucumber', '~> 0.6.0')
+  s.add_development_dependency('bundler', '~> 1.0.2')
   
   s.files = Dir.glob('{bin,lib}/**/*') + %w(LICENSE README.md)
   s.require_path = 'lib'
