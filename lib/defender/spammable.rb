@@ -1,21 +1,65 @@
 module Defender
+  ##
+  # Include this in your ActiveModel-supporting model to enable spam
+  # filtering.
+  #
+  # Defender will try to autodetect details about your rails setup, but you
+  # need to do some configuration yourself. If you already have an application
+  # config file that loads into a constant named {APP_CONFIG}, and your
+  # comment model has an attribute named 'body', 'content' or 'comment'
+  # including the comment body, then you are almost ready to go. Create the
+  # 'spam' and 'defensio_sig' attribute in the database (a boolean and a
+  # string, respectively) and then include {Defender::Spammable} in your
+  # model. You can now call #spam? on your model after saving it.
+  # Congratulations!
+  #
+  # Defender requires the model to have callbacks, more exactly, the
+  # before_save callback. Most ActiveModel-libraries should have that, so you
+  # should only need to worry if you're making your own models. Just look at
+  # {Defender::Test::Comment} for an example comment model.
+  #
+  # @author Henrik Hodne
   module Spammable
+    # These are the default attribute names Defender will pull information
+    # from if no other names are configured. So the content of the comment
+    # will be pulled from 'body', if that attribute exists. Otherwise, it will
+    # pull from 'content'. If that doesn't exist either, it will pull from
+    # 'comment'. If that doesn't exist either, you should configure your own
+    # name in {Spammable::ClassMethods.configure_defender}.
     DEFENSIO_KEYS = {
       'content' => [:body, :content, :comment],
-      'author-name' => [:author_name, :author]
+      'author-name' => [:author_name, :author],
+      'author-email' => [:author_email, :email],
+      'author-ip' => [:author_ip, :ip],
+      'author-url' => [:author_url, :url]
     }
     
+    ##
+    # These methods will be pulled in as class methods in your model when
+    # including {Defender::Spammable}.
     module ClassMethods
-      
+      ##
+      # Configure defender by passing a set of options.
+      #
+      # 
+      def self.configure_defender(options)
+      end
     end
     
+    ##
+    # These methods will be pulled in as instance methods in your model when
+    # including {Defender::Spammable}.
     module InstanceMethods
       ##
       # Returns true if the comment is recognized as spam or malicious.
       #
       # If the value is stored in the database that value will be returned.
-      # Otherwise, the value will be retrieved from Defensio. If nil is
-      # returned, the comment has not yet been submitted to Defensio.
+      # If nil is returned, the comment has not yet been submitted to
+      # Defensio.
+      #
+      # @raise [Defender::DefenderError] Raised if there is no spam attribute
+      #   in the model.
+      # @return [Boolean] Whether the comment is spam or not.
       def spam?
         if self.new_record?
           nil

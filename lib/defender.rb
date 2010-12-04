@@ -6,6 +6,10 @@ module Defender
   
   ##
   # Set this to your Defensio API key. Get one at http://defensio.com.
+  #
+  # @see Defender::Spammable::ClassMethods.configure_defender
+  #
+  # @param [String] api_key The Defensio API key.
   def self.api_key=(api_key)
     @api_key = api_key.to_s
   end
@@ -24,6 +28,8 @@ module Defender
   ##
   # The Defensio backend. If no backend has been set yet, this will create one
   # with the api key set with {Defender.api_key}.
+  #
+  # @return [Defensio] The Defensio backend
   def self.defensio
     return @defensio  if defined?(@defensio)
     require 'defensio'
