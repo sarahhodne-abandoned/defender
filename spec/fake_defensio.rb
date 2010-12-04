@@ -6,7 +6,7 @@ class FakeDefensio
   def post_document(data)
     content = data[:content] || data['content']
     classification, spaminess = content[1..-2].split(',')
-    signature = content.hash
+    signature = "#{rand}#{content}".hash
 
     @documents[signature] = {
       'api-version' => '2.0',
