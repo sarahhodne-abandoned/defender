@@ -1,9 +1,0 @@
-Description:
-    Creates a migration that adds defender fields to the table of your choice.
-    Pass the model name, either CamelCased or under_scored, as an argument.
-
-Example:
-    rails generate defender Comment
-
-    creates a migration for the Comment model:
-        db/migrate/12345678901234_add_defender_to_comments.rb
