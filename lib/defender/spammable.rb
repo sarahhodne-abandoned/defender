@@ -77,9 +77,13 @@ module Defender
         DEFENSIO_KEYS.each do |key, names|
           data[key] = _pick_attribute_name(names)
         end
+        data.merge({
+          'platform' => 'ruby',
+          'type' => 'comment'
+        })
         document = Defender.defensio.post_document(data).last
         self.spam = !document['allow'] 
-        self.defensio_sig = document['signature']
+        self.defensio_sig = document['signature'].to_s
         self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
       end
       
