@@ -1,7 +1,9 @@
-require 'defender/version'
-require 'defender/document'
-
 module Defender
+  autoload :VERSION, 'defender/version'
+  autoload :Version, 'defender/version'
+  autoload :Spammable, 'defender/spammable'
+  autoload :DefenderError, 'defender/defender_error'
+  
   ##
   # Set this to your Defensio API key. Get one at http://defensio.com.
   def self.api_key=(api_key)

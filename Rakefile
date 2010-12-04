@@ -1,40 +1,25 @@
 # coding:utf-8
 $:.unshift File.expand_path('../lib', __FILE__)
 
+require 'bundler'
 require 'rubygems'
 require 'rubygems/specification'
 require 'defender'
 
-def gemspec
-  @gemspec ||= begin
-    file = File.expand_path('../defender.gemspec', __FILE__)
-    eval(File.read(file), binding, file)
-  end
+Bundler::GemHelper.install_tasks
+
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.rspec_opts = %w{-fs --color}
 end
 
-begin
-  require 'spec/rake/spectask'
-rescue LoadError
-  raise 'Run `gem install rspec` to be able to run specs'
-else
-  desc 'Run specs'
-  Spec::Rake::SpecTask.new do |t|
-    t.spec_files = FileList['spec/**/*_spec.rb']
-    t.spec_opts = %w(-fs --color)
-    t.warning = true
-  end
-end
-
-begin
-  require 'cucumber/rake/task'
-rescue LoadError
-  raise 'Run `gem install cucumber` to be able to run features'
-else
-  Cucumber::Rake::Task.new(:features)
+require 'cucumber/rake/task'
+Cucumber::Rake::Task.new do |t|
+  t.cucumber_opts = %w{--format pretty}
 end
 
 desc 'Run features and specs (CI task)'
-task :ci => [:features, :spec]
+task :ci => [:cucumber, :spec]
 
 begin
   require 'yard'
@@ -46,27 +31,3 @@ else
     conf.files = ['lib/**/*.rb', '-', 'LICENSE']
   end
 end
-
-begin
-  require 'rake/gempackagetask'
-rescue LoadError
-  task(:gem) { $stderr.puts '`gem install rake` to package gems' }
-else
-  Rake::GemPackageTask.new(gemspec) do |pkg|
-    pkg.gem_spec = gemspec
-  end
-  task :gem => :gemspec
-end
-
-desc 'Install the gem locally'
-task :install => :package do
-  sh %{gem install pkg/#{gemspec.name}-#{gemspec.version}}
-end
-
-desc 'validate the gemspec'
-task :gemspec do
-  gemspec.validate
-end
-
-task :package => :gemspec
-task :default => :spec

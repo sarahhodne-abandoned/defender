@@ -3,41 +3,33 @@ Before do
 end
 
 Given /^I have a hammy comment$/ do
-  @document = Defender::Document.new
-  @document.data[:content] = '[innocent,0.1]'
+  @comment = Comment.new
+  @comment.body = '[innocent,0.1]'
 end
 
 Given /^I have a spammy comment$/ do
-  @document = Defender::Document.new
-  @document.data[:content] = '[spam,0.9]'
+  @comment = Comment.new
+  @comment.body = '[spam,0.9]'
 end
 
-Given /^it is marked as spam$/ do
-  @document.allow = false
+Given /^I have submitted a comment$/ do
+  @comment = Comment.new
+  @comment.body = '[innocent,0.1]'
+  @comment.save
 end
 
-Given /^it is marked as ham$/ do
-  @document.allow = true
-end
-
-Given /^I have submitted a document$/ do
-  @document = Defender::Document.new
-  @document.data[:content] = '[innocent,0.1]'
-  @document.save
-end
-
-When /^I submit it$/ do
-  @document.save
+When /^I save it$/ do
+  @comment.save
 end
 
 When /^I mark it as a false positive$/ do
-  @document.allow = true
-  @document.save
+  @comment.false_positive!
+  @comment.save
 end
 
 When /^I mark it as a false negative$/ do
-  @document.allow = false
-  @document.save
+  @comment.false_negative!
+  @comment.save
 end
 
 When /^I retrieve the document from the server$/ do
@@ -45,15 +37,15 @@ When /^I retrieve the document from the server$/ do
 end
 
 Then /^it should be marked as ham$/ do
-  @document.allow?.should be_true
+  @comment.spam?.should be_false
 end
 
 Then /^it should be marked as spam$/ do
-  @document.allow?.should be_false
+  @comment.spam?.should be_true
 end
 
 Then /^it should have the same data$/ do
-  @new_document.allow?.should == @document.allow?
+  @new_document.spam?.should == @document.allow?
 end
 
 Then /^it should have the same signature$/ do

@@ -5,10 +5,10 @@ Feature: User submits comment
 
   Scenario: Legit comment (ham)
     Given I have a hammy comment
-    When I submit it
+    When I save it
     Then it should be marked as ham
 
   Scenario: Spam comment
     Given I have a spammy comment
-    When I submit it
+    When I save it
     Then it should be marked as spam
