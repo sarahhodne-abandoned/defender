@@ -100,6 +100,9 @@ module Defender
           'type' => 'comment'
         })
         document = Defender.defensio.post_document(data).last
+        if document['status'] == 'failed'
+          raise DefenderError, document['message']
+        end
         self.spam = !document['allow'] 
         self.defensio_sig = document['signature'].to_s
         self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
