@@ -49,7 +49,7 @@ module Defender
         keys = options.delete(:keys)
         _defensio_keys.merge!(keys) unless keys.nil?
         api_key = options.delete(:api_key)
-        Defender.api_key = api_key unless keys.nil?
+        Defender.api_key = api_key unless api_key.nil?
       end
       
       ##
@@ -95,7 +95,7 @@ module Defender
         _defensio_keys.each do |key, names|
           data[key] = _pick_attribute(names)
         end
-        data.merge({
+        data.merge!({
           'platform' => 'ruby',
           'type' => 'comment'
         })
