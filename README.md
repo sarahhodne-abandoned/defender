@@ -22,54 +22,96 @@ spam and malicious content in the documents.
 A document contains content to be analyzed by Defensio, or that has been
 analyzed.
 
-Before starting to use Defender, you need to retrieve an API key from
-[Defensio][4]. After getting an API key, you need to let Defender know
-what it is by doing something like this somewhere in your code (before
-doing anything like saving documents):
+To use Defender, you need to retrieve an API key from
+[Defensio][4]. Then add Defender (`gem 'defender'`) to your Gemfile and run
+`bundle install`. To set up Defender, open your Comment class and include
+Defender::Spammable, and configure it by adding your API key. Your comment
+class should look something like this:
 
-    Defender.api_key = 'my-api-key'
+    class Comment < ActiveRecord::Base
+      include Defender::Spammable
+      configure_defender :api_key => '0123456789abcdef'
+    end
 
-Submitting documents to Defensio is really easy. Here's a barebones
-example:
+Now you need to add a few fields to your class. Defender requires a boolean
+field named "spam" (this will be `true` for comments marked as spam, and
+`false otherwise`), and a string field named "defensio_sig" (this will include
+a unique identifier so you can later mark false positives and negatives).
+Defender will also set the spaminess field if it exists (the spaminess field
+should be a float that can range between 0.00 and 1.00, where 0.00 is the
+least spammy and 1.00 is the most spammy). After you've done this, you're
+probably done setting up Defender, although you should read on as there's some
+more things you should know.
 
-    require 'defender'
-    document = Defender::Document.new
-    document.data[:content] = 'Hello World!'
-    document.data[:type] = 'comment'
-    document.data[:platform] = 'defender'
-    document.save
+Defender will automatically get the comment body, author name, email, IP and
+URL if you have them in your comment class with "standard names". Defender
+will look for fields named "body", "content" and "comment" (in that order) for
+the comment content, "author_name", "author" for the author name,
+"author_email", "email" for the author email, "author_ip", "ip" for the author
+IP, "author_url", "url" for the author URL. Only the comment content is the
+required one of these. If you're not using those attribute names, look further
+down in the readme under "Defining your own attribute names".
 
-The `document.data` hash can contain a lot of data. The ones you see
-here are the only required ones, but you should submit as much data as
-you can. Look at the [Defensio API docs][3] for information on the
-different data you can submit. Oh, and the keys can be symbols, and you
-can use underscores instead of dashes.
 
-After saving the document, Defender will set the `document.allow?`,
-`document.spaminess` and
-`document.signature` attributes. The first one tells you if you should
-display the document or not on your website. The second is a float which
-tells you just how spammy the document is. This could be useful for
-sorting the documents in an admin panel. The lower the spaminess is, the
-less chance is it for it being spam. The last attribute is an unique
-identifier you should save with your document in the database. This can
-be used for retrieving the status of your document again, and for
-retraining purposes.
+Defining your own attribute names
+---------------------------------
 
-Did I say retraining? Oh yes, you can retrain Defensio! If some spam
-went through the filters, or some legit documents were marked as spam,
-tell Defensio by setting the `document.allow` attribute and save the
-document again:
+Defensio supports a large amount of attributes you can send to it, and the 
+more you send the more accurately it can determine whether it's spam or not.
+For some of these attributes, Defender will use conventions and try to find
+the attribute, but not all are set up (look at 
+Defender::Spammable::DEFENSIO_KEYS for the exact keys it uses). If you are 
+using other attribute names, or want to add more to get more accurate spam
+evaluation, you do that in the `configure_defender` method. Pass in another
+option called `:keys`, which should be a hash of defensio key names and
+attribute names. The list of defensio key names are after the code example,
+and the attribute name is just a symbol. So if your comment content field is
+called "the_comment_itself", your comment class should look like this:
 
-    document.allow = true
-    document.save
+    class Comment
+      include Defender::Spammable
+      configure_defender :api_key => '0123456789abcdef', :keys => { 'content' => :the_comment_itself }
+    end
 
-This tells Defensio that the document should've been allowed. Don't have
-access to the `document` instance any more you say? No problem, just
-retrieve it again using the signature. You did save the signature,
-didn't you?
+These are the keys defensio supports (at the time of writing, see
+http://defensio.com/api for a completely up-to-date list):
 
-    document = Defender::Document.find(signature)
+* **author-email**: The email address of the author of the document.
+* **author-ip**: The IP address of the author of the document.
+* **author-logged-in**: Whether or not the user posting the document is logged
+    onto your Web site, either through your own authentication method or
+    through OpenID.
+* **author-name**: The name of the author of the document.
+* **author-openid**: The OpenID URL of the logged-on user. Must be used in
+    conjunction with user-logged-in=true.
+* **author-trusted**: Whether or not the user is an administrator, moderator,
+    or editor of your Web site. Pass true only if you can guarantee that the
+    user has been authenticated, has a role of responsibility, and can be
+    trusted as a good Web citizen.
+* **author-url**: The URL of the person posting the document.
+* **browser-cookies**: Whether or not the Web browser used to post the
+    document (ie. the comment) has cookies enabled. If no such detection has
+    been made, leave this value empty.
+* **browser-javascript**: Whether or not the Web browser used to post the
+    document (ie. the comment) has JavaScript enabled. If no such detection
+    has been made, leave this value empty.
+* **document-permalink**: The URL to the document being posted.
+* **http-headers**: Contains the HTTP headers sent with the request. You can
+    send a few values or all values. Because this information helps Defensio
+    determine if a document is innocent or not, the more headers you send, the
+    better. The format of this value is one key/value pair per line, each line
+    starting with the key followed by a colon and then the value.
+* **parent-document-date**: The date the parent document was posted. For
+    example, on a blog, this would be the date the article related to the
+    comment (document) was posted. If you're using threaded comments, send the
+    date the article was posted, not the date the parent comment was posted.
+* **parent-document-permalink**: The URL of the parent document. For example,
+    on a blog, this would be the URL the article related to the comment
+    (document) was posted.
+* **referrer**: Provide the value of the HTTP_REFERER (note spelling) in this
+    field.
+* **title**: Provide the title of the document being sent. For example, this
+    might be the title of a blog article.
 
 
 Development
@@ -81,7 +123,6 @@ First, you should clone the repo and run the features and specs:
 
     git clone git://github.com/dvyjones/defender.git
     cd defender
-    rake features
     rake spec
 
 Feel free to ping the mailing list if you have any problems and we'll
@@ -121,7 +162,7 @@ Meta
 * Docs: <http://yardoc.org/docs/dvyjones-defender/>
 * Bugs: <http://github.com/dvyjones/defender/issues>
 * List: <defender@librelist.com>
-* Gems: <http://gemcutter.org/gems/defender>
+* Gems: <http://rubygems.org/gems/defender>
 
 This project uses [Semantic Versioning][sv].
 

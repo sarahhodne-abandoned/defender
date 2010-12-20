@@ -93,6 +93,7 @@ module Defender
       def _defender_before_save
         data = {}
         _defensio_keys.each do |key, names|
+          next if names.nil?
           data[key] = _pick_attribute(names)
         end
         data.merge!({
@@ -111,11 +112,11 @@ module Defender
       ##
       # Return the first attribute value from a list of attribute names/
       #
-      # @param [Array<Symbol>] names A list of attribute names
+      # @param [Array<Symbol>, Symbol] names A list of attribute names
       # @return [] The attribute value of the first existing attribute
       # @return [nil] If no attribute was found (or if attribute value is nil)
       def _pick_attribute(names)
-        names.each do |name|
+        [names].flatten.each do |name|
           return self.send(name) if self.respond_to?(name)
         end
         return nil

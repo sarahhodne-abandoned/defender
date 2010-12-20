@@ -19,7 +19,7 @@ rescue LoadError
   raise 'Run `gem install yard` to generate docs'
 else
   YARD::Rake::YardocTask.new do |conf|
-    conf.options = ['-mmarkdown', '-rREADME.markdown']
+    conf.options = ['-mmarkdown', '-rREADME.md']
     conf.files = ['lib/**/*.rb', '-', 'LICENSE']
   end
 end
