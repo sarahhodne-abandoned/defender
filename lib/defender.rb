@@ -1,3 +1,5 @@
+##
+# Main Defender module. Everything should be under this module.
 module Defender
   autoload :VERSION, 'defender/version'
   autoload :Version, 'defender/version'
@@ -18,7 +20,7 @@ module Defender
   # You most probably don't need to set this.  It is used to replace the backend
   # when running the tests.  If you for any reason need to use another backend
   # than the defensio gem, set this.  The object needs to respond to the same
-  # methods as the {Defensio} object does.
+  # methods as the Defensio object does.
   #
   # @param [Defensio] defensio The Defensio backend
   def self.defensio=(defensio)
