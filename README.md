@@ -78,6 +78,12 @@ called "the_comment_itself", your comment class should look like this:
       configure_defender :api_key => '0123456789abcdef', :keys => { 'content' => :the_comment_itself }
     end
 
+If you don't want to store all the information in the database, you can also
+use the `defensio_data` method. In the model, before saving, call
+`defensio_data` with a hash containing the data you want to send. The keys
+should be strings, you can see all the possible values listed below. The
+`defensio_data` method can be called several times with more data.
+
 These are the keys defensio supports (at the time of writing, see
 http://defensio.com/api for a completely up-to-date list):
 

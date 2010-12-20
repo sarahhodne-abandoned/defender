@@ -86,10 +86,30 @@ module Defender
         end
       end
       
+      ##
+      # Pass in some data to be sent to defensio. You can use this method to
+      # pass in more data that you don't want to save in the model.
+      #
+      # This can be called several times if you want to add more data or
+      # update data already added (using the same key twice will overwrite).
+      #
+      # @param [Hash<String => Object>] data The data to send to defensio. See
+      #   the README for the possible key values.
+      def defensio_data(data)
+        @_defensio_data ||= {}
+        @_defensio_data.merge!(data)
+      end
+      
       private
       
       ##
       # The callback that will be run before a document is saved.
+      #
+      # This will gather all the data and send it off to Defensio, and then
+      # set the spam and defensio_sig attributes (and spaminess if it's
+      # defined) before the model will be saved.
+      #
+      # @raise Defender::DefenderError If Defensio returns an error.
       def _defender_before_save
         data = {}
         _defensio_keys.each do |key, names|
@@ -100,6 +120,7 @@ module Defender
           'platform' => 'ruby',
           'type' => 'comment'
         })
+        data.merge!(@_defensio_data) if defined?(@_defensio_data)
         document = Defender.defensio.post_document(data).last
         if document['status'] == 'failed'
           raise DefenderError, document['message']
