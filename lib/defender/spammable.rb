@@ -39,10 +39,21 @@ module Defender
     # including {Defender::Spammable}.
     module ClassMethods
       ##
-      # Configure defender by passing a set of options.
+      # Configure Defender by passing a set of options.
       #
+      # @param [Hash] options Options for configuring Defender.
+      # @option options [Hash] :keys Mapping between field names in the
+      #   database and in defensio.
       # 
-      def self.configure_defender(options)
+      def configure_defender(options)
+        keys = options.delete(:keys)
+        _defensio_keys.merge!(keys) unless keys.nil?
+        api_key = options.delete(:api_key)
+        Defender.api_key = api_key unless keys.nil?
+      end
+      
+      def _defensio_keys
+        @_defensio_keys ||= DEFENSIO_KEYS.dup
       end
     end
     
@@ -72,10 +83,14 @@ module Defender
       
       private
       
+      ##
+      # The callback that will be run before a document is saved.
+      #
+      # Handles 
       def _defender_before_save
         data = {}
-        DEFENSIO_KEYS.each do |key, names|
-          data[key] = _pick_attribute_name(names)
+        _defensio_keys.each do |key, names|
+          data[key] = _pick_attribute(names)
         end
         data.merge({
           'platform' => 'ruby',
@@ -87,7 +102,7 @@ module Defender
         self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
       end
       
-      def _pick_attribute_name(names)
+      def _pick_attribute(names)
         names.each do |name|
           return self.send(name) if self.respond_to?(name)
         end
@@ -105,6 +120,10 @@ module Defender
           @_defensio_document = Defender.defensio.get_document(self.defensio_sig).last
         end
         @_defensio_document
+      end
+      
+      def _defensio_keys
+        self.class._defensio_keys
       end
     end
     
