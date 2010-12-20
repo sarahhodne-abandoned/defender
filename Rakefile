@@ -13,14 +13,6 @@ RSpec::Core::RakeTask.new(:spec) do |t|
   t.rspec_opts = %w{-fs --color}
 end
 
-require 'cucumber/rake/task'
-Cucumber::Rake::Task.new do |t|
-  t.cucumber_opts = %w{--format pretty}
-end
-
-desc 'Run features and specs (CI task)'
-task :ci => [:cucumber, :spec]
-
 begin
   require 'yard'
 rescue LoadError
