@@ -33,7 +33,7 @@ class should look something like this:
       configure_defender :api_key => '0123456789abcdef'
     end
 
-Now you need to add a few fields to your class. Defender requires a boolean
+Now you need to add a few fields to your model. Defender requires a boolean
 field named "spam" (this will be `true` for comments marked as spam, and
 `false otherwise`), and a string field named "defensio_sig" (this will include
 a unique identifier so you can later mark false positives and negatives).
@@ -51,6 +51,11 @@ the comment content, "author_name", "author" for the author name,
 IP, "author_url", "url" for the author URL. Only the comment content is the
 required one of these. If you're not using those attribute names, look further
 down in the readme under "Defining your own attribute names".
+
+Not using ActiveRecord? No problem, Defender supports all libraries that
+support ActiveModel, including Mongoid, MongoMapper and DataMapper. The syntax
+is the exact same, just use the method your library uses to set up the fields
+needed.
 
 
 Defining your own attribute names
