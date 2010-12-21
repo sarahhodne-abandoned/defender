@@ -10,6 +10,8 @@ Gem::Specification.new do |s|
   s.homepage    = 'http://rubygems.org/gems/dvyjones'
   s.summary     = 'ActiveModel plugin for Defensio.'
   s.description = 'An ActiveModel plugin for Defensio.'
+  
+  s.rubyforge_project = 'defender'
 
   s.required_rubygems_version = ">= 1.3.6"
   
@@ -18,6 +20,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency('bundler', '~> 1.0.0')
   
   s.files        = `git ls-files`.split("\n")
-  s.executables  = `git ls-files`.split("\n").map{|f| f =~ /^bin\/(.*)/ ? $1 : nil}.compact
-  s.require_path = 'lib'
+  s.test_files   = `git ls-files -- spec/*`.split("\n")
+  s.executables  = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
+  s.require_path = ['lib']
 end
