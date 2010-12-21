@@ -93,11 +93,15 @@ module Defender
       # This can be called several times if you want to add more data or
       # update data already added (using the same key twice will overwrite).
       #
+      # Returns the data to be sent. Pass without a parameter to not modify
+      # the data.
+      #
       # @param [Hash<String => Object>] data The data to send to defensio. See
       #   the README for the possible key values.
-      def defensio_data(data)
+      def defensio_data(data={})
         @_defensio_data ||= {}
         @_defensio_data.merge!(data)
+        @_defensio_data
       end
       
       private
@@ -120,7 +124,7 @@ module Defender
           'platform' => 'ruby',
           'type' => 'comment'
         })
-        data.merge!(@_defensio_data) if defined?(@_defensio_data)
+        data.merge!(defensio_data) if defined?(@_defensio_data)
         document = Defender.defensio.post_document(data).last
         if document['status'] == 'failed'
           raise DefenderError, document['message']

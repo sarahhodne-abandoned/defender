@@ -15,6 +15,16 @@ module Defender
   def self.api_key=(api_key)
     @api_key = api_key.to_s
   end
+  
+  ##
+  # Returns the Defensio API key set with {Defender.api_key=}.
+  #
+  # @see Defender.api_key=
+  # @return [String] The API key if set.
+  # @return [nil] If no API key has been set.
+  def self.api_key
+    @api_key
+  end
 
   ##
   # You most probably don't need to set this.  It is used to replace the backend
