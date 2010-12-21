@@ -1,3 +1,4 @@
 module Defender
-  VERSION = '1.0.3'
+  # Current Defender version
+  VERSION = '2.0.0beta1'
 end

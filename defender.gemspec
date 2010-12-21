@@ -1,25 +1,23 @@
 # -*- encoding: utf-8 -*-
-lib = File.expand_path('../lib/', __FILE__)
-$:.unshift(lib) unless $:.include?(lib)
-
-require 'defender/version'
+require File.expand_path("../lib/defender/version", __FILE__)
 
 Gem::Specification.new do |s|
-  s.name = 'defender'
-  s.version = Defender::VERSION
-  s.platform = Gem::Platform::RUBY
-  s.authors = ['Henrik Hodne']
-  s.email = ['dvyjones@binaryhex.com']
-  s.homepage = 'http://github.com/dvyjones/defender'
-  s.summary = 'ActiveModel plugin for Defensio.'
+  s.name        = "defender"
+  s.version     = Defender::VERSION
+  s.platform    = Gem::Platform::RUBY
+  s.authors     = ['Henrik Hodne']
+  s.email       = ['dvyjones@dvyjones.com']
+  s.homepage    = 'http://rubygems.org/gems/dvyjones'
+  s.summary     = 'ActiveModel plugin for Defensio.'
   s.description = 'An ActiveModel plugin for Defensio.'
 
-  s.required_rubygems_version = '>= 1.3.6'
-
+  s.required_rubygems_version = ">= 1.3.6"
+  
   s.add_dependency('defensio', '~> 0.9.1')
   s.add_dependency('activemodel', '~> 3.0.0')
-  s.add_development_dependency('bundler', '~> 1.0.2')
+  s.add_development_dependency('bundler', '~> 1.0.0')
   
-  s.files = Dir.glob('{bin,lib}/**/*') + %w(LICENSE README.md)
+  s.files        = `git ls-files`.split("\n")
+  s.executables  = `git ls-files`.split("\n").map{|f| f =~ /^bin\/(.*)/ ? $1 : nil}.compact
   s.require_path = 'lib'
 end
