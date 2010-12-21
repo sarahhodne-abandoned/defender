@@ -170,7 +170,7 @@ Meta
 
 * Code: `git clone git://github.com/dvyjones/defender.git`
 * Home: <http://github.com/dvyjones/defender/>
-* Docs: <http://yardoc.org/docs/dvyjones-defender/>
+* Docs: <http://rubydoc.info/github/dvyjones/defender/master/frames>
 * Bugs: <http://github.com/dvyjones/defender/issues>
 * List: <defender@librelist.com>
 * Gems: <http://rubygems.org/gems/defender>
