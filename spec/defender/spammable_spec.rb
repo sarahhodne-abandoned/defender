@@ -2,6 +2,18 @@ require 'spec_helper'
 
 module Defender
   describe Spammable do
+    describe '.configure_defender' do
+      it 'sets the attribute-data key mappers' do
+        Comment.configure_defender(:keys => {'foo' => :bar, 'foobar' => :baz})
+        Comment._defensio_keys.should include({'foo' => :bar, 'foobar' => :baz})
+      end
+      
+      it 'sets the API key' do
+        Comment.configure_defender(:api_key => 'foobar')
+        Defender.api_key.should == 'foobar'
+      end
+    end
+    
     describe '#spam?' do
       it 'returns the "spam" attribute unless it is nil' do
         comment_class = Class.new
@@ -34,6 +46,28 @@ module Defender
       end
     end
     
+    describe '#defensio_data' do
+      it 'merges in more data to be sent to Defensio' do
+        comment = Comment.new
+        comment.defensio_data({'foo' => 'FOOBAR', 'foobar' => 'baz'})
+        comment.defensio_data.should include({'foo' => 'FOOBAR', 'foobar' => 'baz'})
+      end
+      
+      it 'overwrites values repassed' do
+        comment = Comment.new
+        comment.defensio_data({'foo' => 'FOOBAR'})
+        comment.defensio_data({'foo' => 'baz'})
+        comment.defensio_data['foo'].should == 'baz'
+      end
+      
+      it 'leaves values that aren\'t modified' do
+        comment = Comment.new
+        comment.defensio_data({'foo' => 'baz'})
+        comment.defensio_data({'bar' => 'foobar'})
+        comment.defensio_data['foo'].should == 'baz'
+      end
+    end
+    
     describe '#_defender_before_save' do
       it 'sets the attributes returned from defensio' do
         comment = Comment.new
@@ -51,6 +85,39 @@ module Defender
         comment = Comment.new
         comment.body = 'Hello, world!'
         comment.save
+        Defender.defensio = old_defensio
+      end
+    end
+    
+    describe '#_pick_attribute' do
+      it 'returns the value of the attribute passed if it exists' do
+        comment = Comment.new
+        comment.body = 'Foobar!'
+        comment.send(:_pick_attribute, :body).should == 'Foobar!'
+      end
+      
+      it 'returns the value for the first attribute that exists in a list of attributes' do
+        comment = Comment.new
+        comment.body = 'Foobar!'
+        comment.send(:_pick_attribute, [:content, :body]).should == 'Foobar!'
+      end
+      
+      it 'returns nil if no attribute with the given names exists' do
+        comment = Comment.new
+        comment.send(:_pick_attribute, :bogus_attribute).should be_nil 
+      end
+    end
+    
+    describe '#_get_defensio_document' do
+      it 'retrieves the document from Defensio' do
+        old_defensio = Defender.defensio
+        defensio = double('defensio')
+        defensio.should_receive(:get_document) { [200, {'status' => 'succeed'}] }
+        Defender.defensio = defensio
+        comment = Comment.new
+        comment.defensio_sig = '0123456789abcdef'
+        comment.send(:_get_defensio_document)
+        Defender.defensio = old_defensio
       end
     end
   end
