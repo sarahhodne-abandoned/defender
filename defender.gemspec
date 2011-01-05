@@ -10,8 +10,6 @@ Gem::Specification.new do |s|
   s.homepage    = 'http://rubygems.org/gems/dvyjones'
   s.summary     = 'ActiveModel plugin for Defensio.'
   s.description = 'An ActiveModel plugin for Defensio.'
-
-  s.required_rubygems_version = ">= 1.3.6"
   
   s.add_dependency('defensio', '~> 0.9.1')
   s.add_dependency('activemodel', '~> 3.0.0')
