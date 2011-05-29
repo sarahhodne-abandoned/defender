@@ -84,6 +84,16 @@ use the `defensio_data` method. In the model, before saving, call
 should be strings, you can see all the possible values listed below. The
 `defensio_data` method can be called several times with more data.
 
+Putting the API key in every single module could be tedious, and definitely
+repetitive, so there is another way to do it. Create an initializer file
+(`config/initializers/defensio.rb` works), and put the following code in it:
+
+  Defender.api_key = '0123456789abcdef'
+
+Obviously, you should replace 0123456789abcdef with your actual API key. This
+way you don't have to pass the `:api_key` attribute to `configure_defender`
+all the time.
+
 These are the keys defensio supports (at the time of writing, see
 http://defensio.com/api for a completely up-to-date list):
 
