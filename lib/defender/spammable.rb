@@ -44,13 +44,28 @@ module Defender
       #   database and in defensio.
       # @option options [String] :api_key Your Defensio API key. Get one at
       #   defensio.com.
+      # @option options [Boolean] :test_mode Set Defender in test mode. See
+      #   {#test_mode}.
       # 
       def configure_defender(options)
         keys = options.delete(:keys)
         _defensio_keys.merge!(keys) unless keys.nil?
         api_key = options.delete(:api_key)
         Defender.api_key = api_key unless api_key.nil?
+        self.test_mode = options.delete(:test_mode)
       end
+      
+      ##
+      # Set this to true to put Defender in "test mode". When in test mode, you
+      # can check if your code is working properly you can specify in the
+      # content field what kind of response you want. If you want a comment to
+      # be marked as spam with a spaminess of 0.85 you write [spam,0.85]
+      # somewhere in the content field of the document. If you want a malicious
+      # response with a spaminess of 0.99 you write [malicious,0.99] and for an
+      # innocent response you write [innocent,0.25]. This is the preferred way
+      # of testing, if you write spammy comments you might hurt the Defensio
+      # performance.
+      attr_accessor :test_mode
       
       ##
       # Returns the key-attribute mapping used.
@@ -122,7 +137,7 @@ module Defender
         end
         data.merge!({
           'platform' => 'ruby',
-          'type' => 'comment'
+          'type' => (self.class.test_mode ? 'test' : 'comment')
         })
         data.merge!(defensio_data) if defined?(@_defensio_data)
         document = Defender.defensio.post_document(data).last
