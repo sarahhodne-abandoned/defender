@@ -12,14 +12,3 @@ require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec) do |t|
   t.rspec_opts = %w{-fs --color}
 end
-
-begin
-  require 'yard'
-rescue LoadError
-  raise 'Run `gem install yard` to generate docs'
-else
-  YARD::Rake::YardocTask.new do |conf|
-    conf.options = ['-mmarkdown', '-rREADME.md']
-    conf.files = ['lib/**/*.rb', '-', 'LICENSE']
-  end
-end
