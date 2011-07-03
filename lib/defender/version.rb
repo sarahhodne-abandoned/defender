@@ -1,4 +1,4 @@
 module Defender
-  # Current Defender version
+  # Public: Current Defender version
   VERSION = '2.0.1'
 end
