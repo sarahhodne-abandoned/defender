@@ -1,52 +1,52 @@
 module Defender
-  ##
-  # Include this in your ActiveModel-supporting model to enable spam
-  # filtering.
+  # Includes all the model magic for Defender. This module should be included in
+  # your model to enable Defender on it. Defender does some automatic detection
+  # on your setup, but you need to do some configuration yourself. You can set
+  # the API key in two different ways. If you only use Defender on one model,
+  # you can configure the API key in the model with the configure_defender
+  # method. If you prefer to use initializers, or you have multiple models, you
+  # probably want to define it in an initializer. You can do this by calling
+  # Defender.api_key directly, like this:
   #
-  # Defender will try to autodetect details about your rails setup, but you
-  # need to do some configuration yourself. If you already have an application
-  # config file that loads into a constant named APP_CONFIG, and your
-  # comment model has an attribute named 'body', 'content' or 'comment'
-  # including the comment body, then you are almost ready to go. Create the
-  # 'spam' and 'defensio_sig' attribute in the database (a boolean and a
-  # string, respectively) and then include {Defender::Spammable} in your
-  # model. You can now call #spam? on your model after saving it.
-  # Congratulations!
+  #   Defender.api_key = 'This is your API key'
   #
-  # Defender requires the model to have callbacks, more exactly, the
-  # before_save callback. Most ActiveModel-libraries should have that, so you
-  # should only need to worry if you're making your own models. Just look at
-  # {Defender::Test::Comment} for an example comment model.
+  # Defender only requires your models to have a before_save callback, but since
+  # most ActiveModel libraries should have this you only need to worry about it
+  # if you're making your own models. Just have a look at
+  # Defender::Test::Comment for an example comment model.
   module Spammable
-    # These are the default attribute names Defender will pull information
-    # from if no other names are configured. So the content of the comment
-    # will be pulled from 'body', if that attribute exists. Otherwise, it will
-    # pull from 'content'. If that doesn't exist either, it will pull from
-    # 'comment'. If that doesn't exist either, you should configure your own
-    # name in {Defender::Spammable::ClassMethods.configure_defender}.
+    # Public: These are the default attribute names Defender will pull
+    # information from if no other names are configured. So the content of the
+    # comment will be pulled from 'body', if that attribute exists. Otherwise,
+    # it will be pulled from 'content'. If that doesn't exist either, it will
+    # pull from 'comment'. If that attribute doesn't exist either, you should
+    # configure your own attributes with the configure_defender method.
     DEFENSIO_KEYS = {
       'content' => [:body, :content, :comment],
       'author-name' => [:author_name, :author],
       'author-email' => [:author_email, :email],
       'author-ip' => [:author_ip, :ip],
       'author-url' => [:author_url, :url]
-    }
+    }.freeze
     
-    ##
-    # These methods will be pulled in as class methods in your model when
-    # including {Defender::Spammable}.
-    module ClassMethods
-      ##
-      # Configure Defender by passing a set of options.
+    # Public: Methods that will be included as class methods when including
+    # Defender::Spammable into your model.
+    module ClassMethods      
+      # Public: Configures various Defender options.
       #
-      # @param [Hash] options Options for configuring Defender.
-      # @option options [Hash] :keys Mapping between field names in the
-      #   database and in defensio.
-      # @option options [String] :api_key Your Defensio API key. Get one at
-      #   defensio.com.
-      # @option options [Boolean] :test_mode Set Defender in test mode. See
-      #   {#test_mode}.
-      # 
+      # options - The hash options used to configure Defender:
+      #           :keys      - A Hash which maps field names in the database to
+      #                        Defensio field names (optional).
+      #           :api_key   - Your Defensio API key String (optional).
+      #           :test_mode - Set this to true to enable the test mode. See
+      #                        test_mode for more information.
+      #
+      # Examples
+      #
+      #   configure_defender :keys => { 'content' => :comment_content },
+      #     :api_key => 'Your API key.', :test_mode => true
+      #
+      # Returns nothing
       def configure_defender(options)
         keys = options.delete(:keys)
         _defensio_keys.merge!(keys) unless keys.nil?
@@ -55,42 +55,42 @@ module Defender
         self.test_mode = options.delete(:test_mode)
       end
       
-      ##
-      # Set this to true to put Defender in "test mode". When in test mode, you
-      # can check if your code is working properly you can specify in the
-      # content field what kind of response you want. If you want a comment to
-      # be marked as spam with a spaminess of 0.85 you write [spam,0.85]
-      # somewhere in the content field of the document. If you want a malicious
-      # response with a spaminess of 0.99 you write [malicious,0.99] and for an
-      # innocent response you write [innocent,0.25]. This is the preferred way
-      # of testing, if you write spammy comments you might hurt the Defensio
-      # performance.
-      attr_accessor :test_mode
-      
-      ##
-      # Returns the key-attribute mapping used.
+      # Public: Returns whether Defender is in "test mode".
       #
-      # Will automatically set it to the defaults in {DEFENSIO_KEYS} if
-      # nothing else has been set before.
+      # When in test mode, you can specify what kind of response you want in the
+      # content field. If you want a comment to be marked as spam with a
+      # spaminess of 0.85, you write [spam,0.85] somewhere in the content field
+      # of the document. If you want a malicious response with a spaminess of
+      # 0.99 you write [malicious,0.99], and for an innocent response you write
+      # [innocent,0.25]. This is the preferred way of testing, and if you test
+      # by writing "spammy" comments, you might hurt the Defensio performance.
+      attr_reader :test_mode
+      
+      # Public: Enables/disables Defender's test mode. You can use this, or the
+      # configure_defender method to enable the test mode, but you should
+      # probably use this if you only temporarily want to enable the test mode.
+      attr_writer :test_mode
+      
+      # Internal: Returns the key-attribute mapping Hash used.
+      #
+      # This will default to DEFENSIO_KEYS, but can be modified.
+      #
+      # The Public API has access to this through configure_defender.
       def _defensio_keys
         @_defensio_keys ||= DEFENSIO_KEYS.dup
       end
     end
     
-    ##
-    # These methods will be pulled in as instance methods in your model when
-    # including {Defender::Spammable}.
+    # Public: Methods that will be included as instance methods when including
+    # Defender::Spammable into your model.
     module InstanceMethods
-      ##
-      # Returns true if the comment is recognized as spam or malicious.
+      # Public: Whether the comment is recognized a malicious comment or as
+      # spam.
       #
-      # If the value is stored in the database that value will be returned.
-      # If nil is returned, the comment has not yet been submitted to
-      # Defensio.
-      #
-      # @raise [Defender::DefenderError] Raised if there is no spam attribute
-      #   in the model.
-      # @return [Boolean] Whether the comment is spam or not.
+      # Returns the Boolean value stored in the database, or nil if the comment
+      #   hasn't been submitted to Defensio yet.
+      # Raises Defender::DefenderError if there is no spam attribute in the
+      #   model.
       def spam?
         if self.new_record?
           nil
@@ -101,18 +101,26 @@ module Defender
         end
       end
       
-      ##
-      # Pass in some data to be sent to defensio. You can use this method to
-      # pass in more data that you don't want to save in the model.
+      # Public: Pass in more data to be sent to Defensio. You should use this
+      # for data you don't want to save in the model, for instance HTTP headers.
       #
-      # This can be called several times if you want to add more data or
-      # update data already added (using the same key twice will overwrite).
+      # This can be called several times, the new data will be merged into the
+      # existing data. If you use the same key twice, the new value will
+      # overwrite the old.
       #
-      # Returns the data to be sent. Pass without a parameter to not modify
-      # the data.
+      # data - The Hash data to send to Defensio. Check the README for the
+      #        possible keys.
       #
-      # @param [Hash<String => Object>] data The data to send to defensio. See
-      #   the README for the possible key values.
+      # Examples
+      #
+      #   def create # A Rails controller action
+      #     @comment = Comment.new(params[:comment])
+      #     @comment.defensio_data(
+      #       'http-headers' => request.env.map {|k,v| "#{k}: #{v}" }.join("\n")
+      #     )
+      #   end
+      #
+      # Returns the data to be sent.
       def defensio_data(data={})
         @_defensio_data ||= {}
         @_defensio_data.merge!(data)
@@ -121,14 +129,14 @@ module Defender
       
       private
       
-      ##
-      # The callback that will be run before a document is saved.
+      # Internal: The callback that will be run before a document is saved.
       #
-      # This will gather all the data and send it off to Defensio, and then
-      # set the spam and defensio_sig attributes (and spaminess if it's
-      # defined) before the model will be saved.
+      # This will gather all the data and send it off to Defensio, and then set
+      # the spam and defensio_sig attributes (and spaminess if it's defined)
+      # before the model will be saved.
       #
-      # @raise Defender::DefenderError If Defensio returns an error.
+      # Raises a Defender::DefenderError if Defensio returns an error. Please
+      #   note that this will cancel the save.
       def _defender_before_save
         data = {}
         _defensio_keys.each do |key, names|
@@ -147,14 +155,13 @@ module Defender
         self.spam = !document['allow'] 
         self.defensio_sig = document['signature'].to_s
         self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
+        true
       end
       
-      ##
-      # Return the first attribute value from a list of attribute names/
+      # Internal: Returns value of the first attribute that exists in a list of
+      # attributes.
       #
-      # @param [Array<Symbol>, Symbol] names A list of attribute names
-      # @return [] The attribute value of the first existing attribute
-      # @return [nil] If no attribute was found (or if attribute value is nil)
+      # names - A Symbol or Array of Symbols representing the attribute name(s).
       def _pick_attribute(names)
         [names].flatten.each do |name|
           return self.send(name) if self.respond_to?(name)
@@ -162,13 +169,14 @@ module Defender
         return nil
       end
       
-      ##
-      # Retrieves the Defensio document from the server if it hasn't been
-      # retrieved before or if the first parameter is true.
+      # Internal: Retrieves the Defensio document from the server if it hasn't
+      # been retrieved before or if the first parameter is true.
       #
-      # @param [Boolean] force Pass true to force a refetch, otherwise it will
-      #   get the cached document (if one is cached).
-      # @return [Hash] The document retrieved from the server.
+      # force - A Boolean representing whether to force a refetch. If a refetch
+      #         isn't forced, the document will only be fetched if it hasn't
+      #         been fetched already.
+      #
+      # Returns the Hash with the information retrieved from the server.
       def _get_defensio_document(force=false)
         if force || @_defensio_document.nil?
           @_defensio_document = Defender.defensio.get_document(self.defensio_sig).last
@@ -176,18 +184,14 @@ module Defender
         @_defensio_document
       end
       
-      ##
-      # Wrapper for {Defender::Spammable::ClassMethods._defensio_keys}.
-      #
-      # @see Defender::Spammable::ClassMethods._defensio_keys
+      # Internal: Wrapper for the class method with the same name.
       def _defensio_keys
         self.class._defensio_keys
       end
     end
     
-    ##
-    # Includes {Defender::Spammable::ClassMethods} and
-    # {Defender::Spammable::InstanceMethods} and sets up save callback.
+    # Internal: Includes the ClassMethods and InstanceMethods and sets up the
+    # before_save callback.
     def self.included(receiver)
       receiver.extend         ClassMethods
       receiver.send :include, InstanceMethods
