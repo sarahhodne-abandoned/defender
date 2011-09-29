@@ -26,11 +26,11 @@ class FakeDefensio
     if @documents.has_key?(signature)
       [200, @documents[signature]]
     else
-      [404,
+      [404, {
         'api-version' => '2.0',
         'status' => 'failure',
         'message' => 'document not found'
-      ]
+      }]
     end
   end
 end
