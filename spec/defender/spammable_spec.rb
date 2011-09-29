@@ -46,6 +46,78 @@ module Defender
       end
     end
     
+    describe '#false_positive!' do
+      it 'tells Defensio the comment is a false positive' do
+        old_defensio = Defender.defensio
+        defensio = double('defensio')
+        defensio.should_receive(:put_document) { [200, {'signature' => 1234567890, 'spaminess' => 0.1, 'allow' => true}] }
+        Defender.defensio = defensio
+        comment = Comment.new
+        # Let's pretend we've submitted this before...
+        comment.defensio_sig = 1234567890
+        comment.spam = true
+        comment.save(false) # Don't run the callbacks
+        
+        comment.false_positive!
+        
+        Defender.defensio = old_defensio
+      end
+      
+      it 'updates the spam attribute' do
+        old_defensio = Defender.defensio
+        defensio = double('defensio')
+        defensio.should_receive(:put_document) { [200, {'signature' => 1234567890, 'spaminess' => 0.1, 'allow' => true}] }
+        Defender.defensio = defensio
+        comment = Comment.new
+        # Let's pretend we've submitted this before...
+        comment.defensio_sig = 1234567890
+        comment.spam = true
+        comment.save(false) # Don't run the callbacks
+        
+        comment.false_positive!
+        
+        comment.spam?.should be_false
+      
+        Defender.defensio = old_defensio
+      end
+    end
+    
+    describe '#false_negative!' do
+      it 'tells Defensio the comment is a false negative' do
+        old_defensio = Defender.defensio
+        defensio = double('defensio')
+        defensio.should_receive(:put_document) { [200, {'signature' => 1234567890, 'spaminess' => 0.1, 'allow' => false}] }
+        Defender.defensio = defensio
+        comment = Comment.new
+        # Let's pretend we've submitted this before...
+        comment.defensio_sig = 1234567890
+        comment.spam = false
+        comment.save(false) # Don't run the callbacks
+        
+        comment.false_negative!
+        
+        Defender.defensio = old_defensio
+      end
+      
+      it 'updates the spam attribute' do
+        old_defensio = Defender.defensio
+        defensio = double('defensio')
+        defensio.should_receive(:put_document) { [200, {'signature' => 1234567890, 'spaminess' => 0.1, 'allow' => false}] }
+        Defender.defensio = defensio
+        comment = Comment.new
+        # Let's pretend we've submitted this before...
+        comment.defensio_sig = 1234567890
+        comment.spam = false
+        comment.save(false) # Don't run the callbacks
+        
+        comment.false_negative!
+        
+        comment.spam?.should be_true
+      
+        Defender.defensio = old_defensio
+      end
+    end
+    
     describe '#defensio_data' do
       it 'merges in more data to be sent to Defensio' do
         comment = Comment.new

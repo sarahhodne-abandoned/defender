@@ -99,6 +99,42 @@ module Defender
         end
       end
       
+      # Public: Report a false positive to Defensio and update the spam
+      # attribute.
+      #
+      # A false positive is a legitimate comment incorrectly marked as spam.
+      #
+      # This must be done within 30 days of the comment originally being
+      # submitted. If you need to update this after that, just set the spam
+      # attribute on your model and save it.
+      #
+      # Raises a Defender::DefenderError if Defensio returns an error.
+      def false_positive!
+        document = Defender.defensio.put_document(self.defensio_sig, {'allow' => 'true'}).last
+        if document['status'] == 'failed'
+          raise DefenderError, document['message']
+        end
+        self.update_attributes(:spam => false)
+      end
+      
+      # Public: Report a false negative to Defensio and update the spam
+      # attribute.
+      #
+      # A false negative is a spammy comment incorrectly marked as legitimate.
+      #
+      # This must be done within 30 days of the comment originally being
+      # submitted. If you need to update this after that, just set the spam
+      # attribute on your model and save it.
+      #
+      # Raises a Defender::DefenderError if Defensio returns an error.
+      def false_negative!
+        document = Defender.defensio.put_document(self.defensio_sig, {'allow' => 'false'}).last
+        if document['status'] == 'failed'
+          raise DefenderError, document['message']
+        end
+        self.update_attributes(:spam => true)
+      end
+      
       # Public: Pass in more data to be sent to Defensio. You should use this
       # for data you don't want to save in the model, for instance HTTP headers.
       #

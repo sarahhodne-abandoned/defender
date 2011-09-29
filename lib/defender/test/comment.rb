@@ -21,11 +21,22 @@ module Defender::Test
     end
   
     # Run save callback and make {Defender::Test::Comment.new_record?} return false.
-    def save
-      _run_save_callbacks do
-        # We're not actually saving anything, just letting Defender know we
-        # would be.
+    def save(with_callbacks=true)
+      if with_callbacks
+        _run_save_callbacks do
+          # We're not actually saving anything, just letting Defender know we
+          # would be.
+          @saved = true
+        end
+      else
         @saved = true
+      end
+    end
+    
+    # Update the attributes with the names of the keys in the hash.
+    def update_attributes(hash={})
+      hash.each do |key, value|
+        self.send("#{key}=", value)
       end
     end
   end
