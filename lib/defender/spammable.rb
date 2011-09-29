@@ -39,7 +39,7 @@ module Defender
       #                        Defensio field names (optional).
       #           :api_key   - Your Defensio API key String (optional).
       #           :test_mode - Set this to true to enable the test mode. See
-      #                        test_mode for more information.
+      #                        Defender.test_mode for more information.
       #
       # Examples
       #
@@ -52,24 +52,22 @@ module Defender
         _defensio_keys.merge!(keys) unless keys.nil?
         api_key = options.delete(:api_key)
         Defender.api_key = api_key unless api_key.nil?
-        self.test_mode = options.delete(:test_mode)
+        Defender.test_mode = options.delete(:test_mode)
       end
       
-      # Public: Returns whether Defender is in "test mode".
+      # Deprecated: Returns whether Defender is in "test mode".
       #
-      # When in test mode, you can specify what kind of response you want in the
-      # content field. If you want a comment to be marked as spam with a
-      # spaminess of 0.85, you write [spam,0.85] somewhere in the content field
-      # of the document. If you want a malicious response with a spaminess of
-      # 0.99 you write [malicious,0.99], and for an innocent response you write
-      # [innocent,0.25]. This is the preferred way of testing, and if you test
-      # by writing "spammy" comments, you might hurt the Defensio performance.
-      attr_reader :test_mode
+      # Use Defender.test_mode instead.
+      def test_mode
+        Defender.test_mode
+      end
       
-      # Public: Enables/disables Defender's test mode. You can use this, or the
-      # configure_defender method to enable the test mode, but you should
-      # probably use this if you only temporarily want to enable the test mode.
-      attr_writer :test_mode
+      # Deprecated: Enables/disables Defender's test mode.
+      #
+      # Use Defender.test_mode= instead.
+      def test_mode=(test_mode)
+        Defender.test_mode = test_mode
+      end
       
       # Internal: Returns the key-attribute mapping Hash used.
       #
@@ -145,7 +143,7 @@ module Defender
         end
         data.merge!({
           'platform' => 'ruby',
-          'type' => (self.class.test_mode ? 'test' : 'comment')
+          'type' => (Defender.test_mode ? 'test' : 'comment')
         })
         data.merge!(defensio_data) if defined?(@_defensio_data)
         document = Defender.defensio.post_document(data).last
