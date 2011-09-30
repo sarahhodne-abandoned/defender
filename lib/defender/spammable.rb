@@ -114,7 +114,7 @@ module Defender
         if document['status'] == 'failed'
           raise DefenderError, document['message']
         end
-        self.update_attributes(:spam => false)
+        update_attributes(:spam => false)
       end
       
       # Public: Report a false negative to Defensio and update the spam
@@ -132,7 +132,7 @@ module Defender
         if document['status'] == 'failed'
           raise DefenderError, document['message']
         end
-        self.update_attributes(:spam => true)
+        update_attributes(:spam => true)
       end
       
       # Public: Pass in more data to be sent to Defensio. You should use this
@@ -163,7 +163,7 @@ module Defender
       
       private
       
-      # Internal: The callback that will be run before a document is saved.
+      # Internal: The callback that will be run before a document is created..
       #
       # This will gather all the data and send it off to Defensio, and then set
       # the spam and defensio_sig attributes (and spaminess if it's defined)
@@ -171,7 +171,7 @@ module Defender
       #
       # Raises a Defender::DefenderError if Defensio returns an error. Please
       #   note that this will cancel the save.
-      def _defender_before_save
+      def _defender_before_create
         data = {}
         _defensio_keys.each do |key, names|
           next if names.nil?
@@ -229,7 +229,7 @@ module Defender
     def self.included(receiver)
       receiver.extend         ClassMethods
       receiver.send :include, InstanceMethods
-      receiver.send :before_save, :_defender_before_save
+      receiver.send :before_create, :_defender_before_create
     end
   end
 end

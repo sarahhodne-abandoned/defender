@@ -9,6 +9,7 @@ module Defender::Test
     extend ActiveModel::Naming
     extend ActiveModel::Callbacks
     define_model_callbacks :save
+    define_model_callbacks :create
   
     # We now have a "valid" model, let's bring in Defender.
     include Defender::Spammable
@@ -21,12 +22,18 @@ module Defender::Test
     end
   
     # Run save callback and make {Defender::Test::Comment.new_record?} return false.
+    #
+    # The with_callbacks method is only for using this as a test interface.
     def save(with_callbacks=true)
       if with_callbacks
         _run_save_callbacks do
           # We're not actually saving anything, just letting Defender know we
           # would be.
-          @saved = true
+          unless @saved
+            _run_create_callbacks do
+              @saved = true
+            end
+          end
         end
       else
         @saved = true
@@ -38,6 +45,7 @@ module Defender::Test
       hash.each do |key, value|
         self.send("#{key}=", value)
       end
+      save
     end
   end
 end
