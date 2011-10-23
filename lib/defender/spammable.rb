@@ -28,10 +28,10 @@ module Defender
       'author-ip' => [:author_ip, :ip],
       'author-url' => [:author_url, :url]
     }.freeze
-    
+
     # Public: Methods that will be included as class methods when including
     # Defender::Spammable into your model.
-    module ClassMethods      
+    module ClassMethods
       # Public: Configures various Defender options.
       #
       # options - The hash options used to configure Defender:
@@ -54,21 +54,21 @@ module Defender
         Defender.api_key = api_key unless api_key.nil?
         Defender.test_mode = options.delete(:test_mode)
       end
-      
+
       # Deprecated: Returns whether Defender is in "test mode".
       #
       # Use Defender.test_mode instead.
       def test_mode
         Defender.test_mode
       end
-      
+
       # Deprecated: Enables/disables Defender's test mode.
       #
       # Use Defender.test_mode= instead.
       def test_mode=(test_mode)
         Defender.test_mode = test_mode
       end
-      
+
       # Internal: Returns the key-attribute mapping Hash used.
       #
       # This will default to DEFENSIO_KEYS, but can be modified.
@@ -78,7 +78,7 @@ module Defender
         @_defensio_keys ||= DEFENSIO_KEYS.dup
       end
     end
-    
+
     # Public: Methods that will be included as instance methods when including
     # Defender::Spammable into your model.
     module InstanceMethods
@@ -98,7 +98,7 @@ module Defender
           raise Defender::DefenderError, 'You need to add a spam attribute to the model'
         end
       end
-      
+
       # Public: Report a false positive to Defensio and update the spam
       # attribute.
       #
@@ -116,7 +116,7 @@ module Defender
         end
         update_attributes(:spam => false)
       end
-      
+
       # Public: Report a false negative to Defensio and update the spam
       # attribute.
       #
@@ -134,7 +134,7 @@ module Defender
         end
         update_attributes(:spam => true)
       end
-      
+
       # Public: Pass in more data to be sent to Defensio. You should use this
       # for data you don't want to save in the model, for instance HTTP headers.
       #
@@ -160,9 +160,9 @@ module Defender
         @_defensio_data.merge!(data)
         @_defensio_data
       end
-      
+
       private
-      
+
       # Internal: The callback that will be run before a document is created..
       #
       # This will gather all the data and send it off to Defensio, and then set
@@ -186,12 +186,12 @@ module Defender
         if document['status'] == 'failed'
           raise DefenderError, document['message']
         end
-        self.spam = !document['allow'] 
+        self.spam = !document['allow']
         self.defensio_sig = document['signature'].to_s
         self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
         true
       end
-      
+
       # Internal: Returns value of the first attribute that exists in a list of
       # attributes.
       #
@@ -202,7 +202,7 @@ module Defender
         end
         return nil
       end
-      
+
       # Internal: Retrieves the Defensio document from the server if it hasn't
       # been retrieved before or if the first parameter is true.
       #
@@ -217,13 +217,13 @@ module Defender
         end
         @_defensio_document
       end
-      
+
       # Internal: Wrapper for the class method with the same name.
       def _defensio_keys
         self.class._defensio_keys
       end
     end
-    
+
     # Internal: Includes the ClassMethods and InstanceMethods and sets up the
     # before_save callback.
     def self.included(receiver)

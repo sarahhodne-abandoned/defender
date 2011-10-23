@@ -5,7 +5,7 @@ module Defender
   autoload :Version, 'defender/version'
   autoload :Spammable, 'defender/spammable'
   autoload :DefenderError, 'defender/defender_error'
-  
+
   # Public: Set the Defensio API key. Get one at http://defensio.com.
   #
   # Defender will not work without a Defensio API key.
@@ -14,12 +14,12 @@ module Defender
   def self.api_key=(api_key)
     @api_key = api_key.to_s
   end
-  
+
   # Public: Returns the Defensio API key String set with #api_key=
   def self.api_key
     @api_key
   end
-  
+
   # Public: Returns whether Defender is in "test mode".
   #
   # When in test mode, you can specify what kind of response you want in the
@@ -32,7 +32,7 @@ module Defender
   def self.test_mode
     !!@test_mode
   end
-  
+
   # Public: Enables/disables Defender's test mode. You can use this, or the
   # configure_defender method to enable the test mode, but you should
   # probably use this if you only temporarily want to enable the test mode.
