@@ -29,7 +29,7 @@ module Defender::Test
         _run_save_callbacks do
           # We're not actually saving anything, just letting Defender know we
           # would be.
-          unless @saved
+          unless defined?(@saved) && @saved
             _run_create_callbacks do
               @saved = true
             end

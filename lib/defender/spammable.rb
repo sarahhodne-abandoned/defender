@@ -215,7 +215,7 @@ module Defender
       #
       # Returns the Hash with the information retrieved from the server.
       def _get_defensio_document(force=false)
-        if force || @_defensio_document.nil?
+        if force || !defined?(@_defensio_document) || @_defensio_document.nil?
           @_defensio_document = Defender.defensio.get_document(self.defensio_sig).last
         end
         @_defensio_document
