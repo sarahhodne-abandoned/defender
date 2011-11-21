@@ -190,7 +190,7 @@ module Defender
           self.defensio_sig = document['signature'].to_s
           self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
         else
-          raise DefenderError, 'Got nil response from Defensio API'
+          raise DefenderError, 'Got nil response from Defensio API, service might be down'
         end
         true
       end
