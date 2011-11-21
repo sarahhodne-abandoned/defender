@@ -182,13 +182,16 @@ module Defender
           'type' => (Defender.test_mode ? 'test' : 'comment')
         })
         data.merge!(defensio_data) if defined?(@_defensio_data)
-        document = Defender.defensio.post_document(data).last
-        if document['status'] == 'failed'
-          raise DefenderError, document['message']
+        if document = Defender.defensio.post_document(data).last
+          if document['status'] == 'failed'
+            raise DefenderError, document['message']
+          end
+          self.spam = !document['allow']
+          self.defensio_sig = document['signature'].to_s
+          self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
+        else
+          raise DefenderError, 'Got nil response from Defensio API, service might be down'
         end
-        self.spam = !document['allow']
-        self.defensio_sig = document['signature'].to_s
-        self.spaminess = document['spaminess'] if self.respond_to?(:spaminess=)
         true
       end
 
