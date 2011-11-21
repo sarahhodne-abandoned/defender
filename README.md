@@ -2,6 +2,9 @@
 
 [![Click here to lend your support to: Defender - A Ruby wrapper for Defensio and make a donation at www.pledgie.com](http://www.pledgie.com/campaigns/16244.png?skin_name=chrome)](http://www.pledgie.com/campaigns/16244)
 
+[![Build Status](https://secure.travis-ci.org/dvyjones/defender.png?branch=master)](http://travis-ci.org/dvyjones/defender)
+
+
 Defender is a wrapper for the [Defensio](http://defensio.com) spam filtering 
 API. From their own site:
 
