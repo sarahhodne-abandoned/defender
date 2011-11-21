@@ -34,7 +34,6 @@ GEM
       diff-lcs (~> 1.1.2)
     rspec-mocks (2.7.0)
     watchr (0.7)
-    yard (0.6.8)
 
 PLATFORMS
   ruby
@@ -45,4 +44,3 @@ DEPENDENCIES
   rake
   rspec (~> 2.7)
   watchr (~> 0.7)
-  yard (~> 0.6.3)
