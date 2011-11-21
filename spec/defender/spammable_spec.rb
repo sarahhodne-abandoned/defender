@@ -178,27 +178,38 @@ module Defender
         comment.save
         Defender.defensio = old_defensio
       end
+
+      it 'handles nil response from Defensio' do
+        old_defensio = Defender.defensio
+        defensio = double('defensio')
+        defensio.should_receive(:post_document) { [nil] }
+        Defender.defensio = defensio
+        comment = Comment.new
+        comment.body = 'Hello, world!'
+        lambda { comment.save }.should raise_error Defender::DefenderError
+        Defender.defensio = old_defensio
+      end
     end
-    
+
     describe '#_pick_attribute' do
       it 'returns the value of the attribute passed if it exists' do
         comment = Comment.new
         comment.body = 'Foobar!'
         comment.send(:_pick_attribute, :body).should == 'Foobar!'
       end
-      
+
       it 'returns the value for the first attribute that exists in a list of attributes' do
         comment = Comment.new
         comment.body = 'Foobar!'
         comment.send(:_pick_attribute, [:content, :body]).should == 'Foobar!'
       end
-      
+
       it 'returns nil if no attribute with the given names exists' do
         comment = Comment.new
-        comment.send(:_pick_attribute, :bogus_attribute).should be_nil 
+        comment.send(:_pick_attribute, :bogus_attribute).should be_nil
       end
     end
-    
+
     describe '#_get_defensio_document' do
       it 'retrieves the document from Defensio' do
         old_defensio = Defender.defensio
