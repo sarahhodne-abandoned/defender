@@ -13,6 +13,19 @@ API. From their own site:
 > other unwanted or risky content to fully protect your blog or Web 2.0
 > application.
 
+## Installing
+
+In **Rails 3**, add this to your Gemfile and run the `bundle` command.
+
+    gem 'defender'
+
+If you want to live on the bleeding edge, you can use the git repo. YMMV.
+
+    gem 'defender', :git => 'git://github.com/dvyjones/defender.git'
+
+For any other kind of web framework, just install the `defender` gem, and
+`require 'defender'` somewhere in your code.
+
 ## Getting Started
 
 I'm going to assume that you already have a comment model. The comment model
@@ -41,7 +54,7 @@ class AddDefenderFieldsToComments < ActiveRecord::Migration
     add_column :comments, :spaminess, :float
   end
 end
-````
+```
 
 ### 3. Configure the model
 
@@ -62,19 +75,6 @@ end
 
 In this example, `'content'` is the Defensio field, and `:data` is the model
 attribute.
-
-## Installation
-
-In **Rails 3**, add this to your Gemfile and run the `bundle` command.
-
-    gem 'defender'
-
-If you want to live on the bleeding edge, you can use the git repo. YMMV.
-
-    gem 'defender', :git => 'git://github.com/dvyjones/defender.git'
-
-For any other kind of web framework, just install the `defender` gem, and
-`require 'defender'` somewhere in your code.
 
 ## Contributing
 
