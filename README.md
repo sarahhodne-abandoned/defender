@@ -4,6 +4,7 @@
 
 [![Build Status](https://secure.travis-ci.org/dvyjones/defender.png?branch=master)](http://travis-ci.org/dvyjones/defender)
 
+[Wiki](https://github.com/dvyjones/defender/wiki) | [Docs](http://rubydoc.info/github/dvyjones/defender/master/frames)
 
 Defender is a wrapper for the [Defensio](http://defensio.com) spam filtering 
 API. From their own site:
