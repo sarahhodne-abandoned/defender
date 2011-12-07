@@ -39,7 +39,9 @@ config.defender.api_key = 'your api key'
 Defender requires you to put three columns in your model. To generate a migration
 for them run
 
-  $ rails generate defender:migration model_name
+```
+$ rails generate defender:migration model_name
+```
 
 Replace `model_name` with the name of your model (of course). Next up, you just
 need to include Defender in your model.
