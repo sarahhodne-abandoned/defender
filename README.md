@@ -69,7 +69,7 @@ class Comment < ActiveRecord::Base
 end
 ```
 
-Defensio accepts **a lot** of data. Here are all the things you can send it:
+Defensio accepts *a lot* of data. Here are all the things you can send it:
 
 * **content**: The body of the document. This is the only required thing to
   send.
