@@ -1,3 +1,5 @@
+require 'defender/model'
+
 # Public: The main Defender module. This is the namespace under which all of
 # Defender is.
 module Defender

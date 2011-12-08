@@ -12,7 +12,7 @@ module Defender::Test
     define_model_callbacks :create
 
     # We now have a "valid" model, let's bring in Defender.
-    include Defender::Spammable
+    include Defender::Model
 
     attr_accessor :body, :author, :author_ip, :created_at, :spam, :defensio_sig
 
