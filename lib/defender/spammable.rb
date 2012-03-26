@@ -114,7 +114,7 @@ module Defender
         if document['status'] == 'failed'
           raise DefenderError, document['message']
         end
-        update_attributes(:spam => false)
+        update_attribute(:spam, false)
       end
 
       # Public: Report a false negative to Defensio and update the spam
@@ -132,7 +132,7 @@ module Defender
         if document['status'] == 'failed'
           raise DefenderError, document['message']
         end
-        update_attributes(:spam => true)
+        update_attribute(:spam, true)
       end
 
       # Public: Pass in more data to be sent to Defensio. You should use this
