@@ -79,9 +79,6 @@ module Defender
       end
     end
 
-    # Public: Methods that will be included as instance methods when including
-    # Defender::Spammable into your model.
-    module InstanceMethods
       # Public: Whether the comment is recognized a malicious comment or as
       # spam.
       #
@@ -225,13 +222,11 @@ module Defender
       def _defensio_keys
         self.class._defensio_keys
       end
-    end
 
     # Internal: Includes the ClassMethods and InstanceMethods and sets up the
     # before_save callback.
     def self.included(receiver)
       receiver.extend         ClassMethods
-      receiver.send :include, InstanceMethods
       receiver.send :before_create, :_defender_before_create
     end
   end
