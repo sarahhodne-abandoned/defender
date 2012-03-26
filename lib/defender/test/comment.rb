@@ -40,12 +40,9 @@ module Defender::Test
       end
     end
 
-    # Update the attributes with the names of the keys in the hash.
-    def update_attributes(hash={})
-      hash.each do |key, value|
-        self.send("#{key}=", value)
-      end
-      save
+    def update_attribute(name, value)
+      self.send("#{name}=".to_sym, value)
+      self.save
     end
   end
 end
