@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Defender by dvyjones</title>
+    
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Defender</h1>
+        <p>Defender is a wrapper for the Defensio spam filtering API written in Ruby.</p>
+        <p class="view"><a href="https://github.com/dvyjones/defender">View the Project on GitHub <small>dvyjones/defender</small></a></p>
+        <ul>
+          <li><a href="https://github.com/dvyjones/defender/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/dvyjones/defender/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/dvyjones/defender">Fork On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h3>Defender</h3>
+
+<p>Defender is a wrapper for the <a href="http://defensio.com">Defensio</a> spam filtering 
+API. From their own site:</p>
+<blockquote>
+<p>More than just another spam filter, Defensio also eliminates malware and
+other unwanted or risky content to fully protect your blog or Web 2.0
+application.</p>
+</blockquote>
+<h4>Installing</h4>
+
+<p>In <strong>Rails 3</strong>, add this to your Gemfile and run the <code>bundle</code> command.</p>
+
+<div class="highlight">
+<pre><span class="n">gem</span> <span class="s1">'defender'</span>
+</pre>
+</div>
+
+
+<p>If you want to live on the bleeding edge, you can use the git repo. YMMV.</p>
+
+<div class="highlight">
+<pre><span class="n">gem</span> <span class="s1">'defender'</span><span class="p">,</span> <span class="ss">:git</span> <span class="o">=&gt;</span> <span class="s1">'git://github.com/dvyjones/defender.git'</span>
+</pre>
+</div>
+
+
+<p>For any other kind of web framework, just install the <code>defender</code> gem, and
+<code>require 'defender'</code> somewhere in your code.</p>
+
+<h4>Getting Started</h4>
+
+<p>I'm going to assume that you already have a comment model. The comment model
+is required to have at least a content or body field.</p>
+
+<h5>1. Create an initializer</h5>
+
+<p>You need to provide Defender with your API key. The preferred way of doing
+this is with an initializer file. Create a file in the <code>config/initializers</code>
+folder, and put the following line in it.</p>
+
+<div class="highlight">
+<pre><span class="no">Defender</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="s1">'YOUR_API_KEY'</span>
+</pre>
+</div>
+
+
+<h5>2. Add the required fields to your model</h5>
+
+<p>You need to add a boolean field named <code>spam</code>, and a string field named
+<code>defensio_sig</code> to your model. You should also add a float field named
+<code>spaminess</code>, although this isn't required. Here's an example migration for
+Active Record:</p>
+
+<div class="highlight">
+<pre><span class="k">class</span> <span class="nc">AddDefenderFieldsToComments</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+  <span class="k">def</span> <span class="nf">change</span>
+    <span class="n">add_column</span> <span class="ss">:comments</span><span class="p">,</span> <span class="ss">:spam</span><span class="p">,</span> <span class="ss">:boolean</span>
+    <span class="n">add_column</span> <span class="ss">:comments</span><span class="p">,</span> <span class="ss">:defensio_sig</span><span class="p">,</span> <span class="ss">:string</span>
+    <span class="n">add_column</span> <span class="ss">:comments</span><span class="p">,</span> <span class="ss">:spaminess</span><span class="p">,</span> <span class="ss">:float</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</pre>
+</div>
+
+
+<h5>3. Configure the model</h5>
+
+<p>In your model, <code>include Defender::Spammable</code>. If the model attributes match up
+with what Defender autodetects (check the wiki), you are now good to go! The
+<code>spam</code> attribute will be automatically updated by Defender when you save the
+model.</p>
+
+<p>If you need to change any of the attributes, you can pass <code>configure_defender</code>
+the mappings, like this:</p>
+
+<div class="highlight">
+<pre><span class="k">class</span> <span class="nc">Comment</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+    <span class="kp">include</span> <span class="no">Defender</span><span class="o">::</span><span class="no">Spammable</span>
+    <span class="n">configure_defender</span> <span class="ss">:keys</span> <span class="o">=&gt;</span> <span class="p">{</span> <span class="s1">'content'</span> <span class="o">=&gt;</span> <span class="ss">:data</span> <span class="p">}</span>
+<span class="k">end</span>
+</pre>
+</div>
+
+
+<p>In this example, <code>'content'</code> is the Defensio field, and <code>:data</code> is the model
+attribute.</p>
+
+<h4>Contributing</h4>
+
+<ol>
+<li>Fork it.</li>
+<li>Create a branch (<code>git checkout -b add-resque-support</code>)</li>
+<li>Make your changes</li>
+<li>Commit your changes (<code>git commit -am "Added support for Resque"</code>)</li>
+<li>Push to the branch (<code>git push origin add-resque-support</code>)</li>
+<li>Create a <a href="http://help.github.com/pull-requests/">Pull Request</a> from your branch.</li>
+<li>Promote it. Get others to drop in and +1 it.</li>
+</ol>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/dvyjones">dvyjones</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>
